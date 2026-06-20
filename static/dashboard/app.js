@@ -1,0 +1,123 @@
+const deviceList = document.querySelector("#deviceList");
+const historyList = document.querySelector("#history");
+const toast = document.querySelector("#toast");
+const refreshButton = document.querySelector("#refresh");
+
+const kindLabels = {
+  light: "Luz",
+  door: "Puerta",
+  lock: "Cerradura",
+};
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(";").shift();
+  return "";
+}
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add("is-visible");
+  window.clearTimeout(showToast.timer);
+  showToast.timer = window.setTimeout(() => {
+    toast.classList.remove("is-visible");
+  }, 2600);
+}
+
+function setHotspotState(device) {
+  const hotspot = document.querySelector(`[data-device="${device.key}"]`);
+  if (hotspot) {
+    hotspot.classList.toggle("is-on", device.is_on);
+  }
+}
+
+function renderDevices(devices) {
+  deviceList.innerHTML = "";
+  devices.forEach((device) => {
+    setHotspotState(device);
+
+    const card = document.createElement("article");
+    card.className = "device-card";
+    card.innerHTML = `
+      <div>
+        <div class="device-name">${device.label}</div>
+        <div class="device-kind">${kindLabels[device.kind] || "Dispositivo"}</div>
+      </div>
+      <button class="switch ${device.is_on ? "is-on" : ""}" type="button" data-device="${device.key}">
+        ${device.is_on ? "Activo" : "Inactivo"}
+      </button>
+    `;
+    deviceList.appendChild(card);
+  });
+}
+
+function renderHistory(events) {
+  historyList.innerHTML = "";
+  if (!events.length) {
+    historyList.innerHTML = '<div class="history-item"><span class="event-time">--:--</span><span class="event-message">Sin eventos todavia</span></div>';
+    return;
+  }
+
+  events.forEach((event) => {
+    const item = document.createElement("article");
+    item.className = "history-item";
+    item.innerHTML = `
+      <span class="event-time">${event.created_at}</span>
+      <span class="event-message">${event.command} - ${event.message}</span>
+    `;
+    historyList.appendChild(item);
+  });
+}
+
+async function loadDevices() {
+  const response = await fetch("/api/devices/");
+  const data = await response.json();
+  renderDevices(data.devices);
+}
+
+async function loadHistory() {
+  const response = await fetch("/api/history/");
+  const data = await response.json();
+  renderHistory(data.events);
+}
+
+async function toggleDevice(deviceKey, forcedState = null) {
+  const hotspot = document.querySelector(`[data-device="${deviceKey}"]`);
+  const nextState = forcedState ?? !hotspot?.classList.contains("is-on");
+
+  const response = await fetch(`/api/devices/${deviceKey}/toggle/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: JSON.stringify({ is_on: nextState }),
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    showToast(data.message || data.error || "No se pudo enviar el comando");
+    return;
+  }
+
+  setHotspotState(data.device);
+  await loadDevices();
+  await loadHistory();
+  showToast(data.message);
+}
+
+document.addEventListener("click", (event) => {
+  const control = event.target.closest("[data-device]");
+  if (!control) return;
+  toggleDevice(control.dataset.device);
+});
+
+refreshButton.addEventListener("click", async () => {
+  await loadDevices();
+  await loadHistory();
+  showToast("Estados actualizados");
+});
+
+loadDevices();
+loadHistory();

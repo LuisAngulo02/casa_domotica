@@ -1,0 +1,60 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Casa Domotica Inteligente</title>
+  <link rel="stylesheet" href="{% static 'dashboard/styles.css' %}">
+</head>
+<body>
+  <main class="shell">
+    <section class="topbar" aria-label="Resumen del sistema">
+      <div>
+        <p class="eyebrow">Grupo 1</p>
+        <h1>Casa Domotica Inteligente</h1>
+      </div>
+      <div class="connection">
+        <span class="connection-dot"></span>
+        <span>Modo simulacion serial</span>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="plan-wrap">
+        <div class="house-plan" aria-label="Plano interactivo de la casa">
+          <div class="room room-bedroom-a">Habitacion 1</div>
+          <div class="room room-bedroom-b">Habitacion 2</div>
+          <div class="room room-living">Sala</div>
+          <div class="room room-kitchen">Cocina</div>
+          <div class="room room-garden">Jardin</div>
+
+          <button class="hotspot light" data-device="luz_habitacion_1" style="--x: 24%; --y: 27%;" aria-label="Luz habitacion 1"></button>
+          <button class="hotspot light" data-device="luz_habitacion_2" style="--x: 63%; --y: 27%;" aria-label="Luz habitacion 2"></button>
+          <button class="hotspot light" data-device="luz_sala" style="--x: 29%; --y: 68%;" aria-label="Luz sala"></button>
+          <button class="hotspot light" data-device="luz_cocina" style="--x: 66%; --y: 68%;" aria-label="Luz cocina"></button>
+          <button class="hotspot light outdoor" data-device="luz_jardin" style="--x: 88%; --y: 50%;" aria-label="Luz exterior jardin"></button>
+          <button class="hotspot door" data-device="puerta" style="--x: 50%; --y: 93%;" aria-label="Puerta principal"></button>
+          <button class="hotspot lock" data-device="cerradura" style="--x: 58%; --y: 90%;" aria-label="Cerradura principal"></button>
+        </div>
+      </div>
+
+      <aside class="panel" aria-label="Estado de dispositivos">
+        <div class="panel-header">
+          <h2>Control manual</h2>
+          <button id="refresh" class="icon-button" type="button" aria-label="Actualizar estados">R</button>
+        </div>
+        <div id="deviceList" class="device-list"></div>
+
+        <div class="panel-header history-title">
+          <h2>Historial</h2>
+        </div>
+        <div id="history" class="history"></div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="{% static 'dashboard/app.js' %}"></script>
+</body>
+</html>
