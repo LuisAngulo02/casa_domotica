@@ -14,6 +14,7 @@ from .services import (
     serialize_event,
     toggle_device_state,
 )
+from .serial_bridge import check_connection
 
 
 @ensure_csrf_cookie
@@ -139,3 +140,9 @@ def sync_weather(request):
         "is_night": is_night,
         "temperature": current_temp
     })
+
+
+@require_GET
+def system_status(request):
+    status = check_connection()
+    return JsonResponse(status)

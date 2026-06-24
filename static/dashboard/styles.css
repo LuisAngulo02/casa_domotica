@@ -327,39 +327,42 @@ button.room:hover,
   top: 70px;
   width: 50%;
   height: 38%;
-  border: 8px solid #71431e;
-  border-radius: 5px;
-  box-shadow: 0 12px 16px rgba(53, 35, 22, .25);
+  border-radius: 12px;
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.3), inset 0 -10px 15px rgba(0, 0, 0, 0.2);
+  background-color: #f4f0ec;
+  overflow: hidden;
 }
 
 .bed::before,
 .bed::after {
   content: "";
   position: absolute;
-  top: 8px;
-  width: 28%;
-  height: 30%;
-  border-radius: 4px;
-  background: #f3efe2;
-  box-shadow: inset -3px -3px 6px rgba(80, 75, 66, .16);
+  top: 10px;
+  width: 32%;
+  height: 25%;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #ffffff, #e6e2df);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), inset 0 2px 4px rgba(255,255,255,0.8);
 }
 
 .bed::before {
-  left: 8px;
+  left: 12%;
 }
 
 .bed::after {
-  left: 40%;
+  right: 12%;
 }
 
 .bed-green {
   right: 18%;
-  background: linear-gradient(90deg, #446e3c 0 62%, #375c32 62% 68%, #53824b 68%);
+  background: linear-gradient(180deg, #78a169 0 45%, #58804a 45% 48%, #426337 48% 100%);
+  border: 4px solid #37532d;
 }
 
 .bed-purple {
   left: 18%;
-  background: linear-gradient(90deg, #7b3c94 0 62%, #66317f 62% 68%, #8c4da4 68%);
+  background: linear-gradient(180deg, #a475be 0 45%, #85599e 45% 48%, #6a467e 48% 100%);
+  border: 4px solid #523661;
 }
 
 .nightstand {
@@ -367,9 +370,10 @@ button.room:hover,
   bottom: 26px;
   width: 34px;
   height: 32px;
-  border-radius: 3px;
-  background: linear-gradient(135deg, #6a3918, #8b582d);
-  box-shadow: 0 8px 12px rgba(44, 26, 13, .28);
+  border-radius: 4px;
+  background: linear-gradient(135deg, #6a3918, #52290f);
+  box-shadow: 0 10px 16px rgba(44, 26, 13, .3), inset 0 2px 2px rgba(255, 255, 255, 0.1);
+  border: 2px solid #3c1e09;
 }
 
 .stand-left {
@@ -382,13 +386,14 @@ button.room:hover,
 
 .plant {
   position: absolute;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 48% 50%, #7bc24e 0 10%, transparent 11%),
-    conic-gradient(from 10deg, #275f28, #69a83f, #2f7430, #8bcf55, #275f28);
-  box-shadow: 0 8px 12px rgba(25, 60, 25, .25);
+    radial-gradient(circle at 40% 40%, #8bcf55 0 20%, transparent 40%),
+    conic-gradient(from 0deg, #275f28, #4f9430, #275f28, #4f9430, #275f28);
+  box-shadow: 0 12px 18px rgba(25, 60, 25, .4), inset 0 -4px 8px rgba(0,0,0,0.3);
+  border: 2px solid #1c451d;
 }
 
 .pot-left {
@@ -405,22 +410,31 @@ button.room:hover,
 .stove,
 .fridge {
   position: absolute;
-  background: #6d6156;
-  box-shadow: 0 9px 14px rgba(45, 35, 28, .25);
+  border-radius: 4px;
+  box-shadow: 0 12px 18px rgba(45, 35, 28, .3);
+}
+
+.fridge {
+  background: linear-gradient(135deg, #f5f2e9, #b5b1a8);
+  border: 2px solid #8e8b85;
 }
 
 .counter-long {
   left: 10px;
   top: 16px;
-  width: 28px;
+  width: 32px;
   height: 72%;
+  background: linear-gradient(90deg, #7d7165, #5a5148);
+  border: 2px solid #423b34;
 }
 
 .counter-low {
   left: 10px;
   bottom: 12px;
   width: 72%;
-  height: 28px;
+  height: 32px;
+  background: linear-gradient(180deg, #7d7165, #5a5148);
+  border: 2px solid #423b34;
 }
 
 .stove {
@@ -428,11 +442,12 @@ button.room:hover,
   top: 34px;
   width: 52px;
   height: 70px;
-  border-radius: 3px;
+  border-radius: 6px;
   background:
-    radial-gradient(circle at 30% 30%, #111 0 11px, transparent 12px),
-    radial-gradient(circle at 70% 70%, #111 0 11px, transparent 12px),
-    #8b8176;
+    radial-gradient(circle at 30% 30%, #1a1a1a 0 12px, transparent 13px),
+    radial-gradient(circle at 70% 70%, #1a1a1a 0 12px, transparent 13px),
+    linear-gradient(135deg, #4a4a4a, #2b2b2b);
+  border: 2px solid #1c1c1c;
 }
 
 .fridge {
@@ -450,9 +465,10 @@ button.room:hover,
   top: 28%;
   width: 44%;
   height: 42%;
-  border-radius: 4px;
-  background: linear-gradient(135deg, #754116, #9b642e 55%, #63320f);
-  box-shadow: 0 13px 18px rgba(55, 32, 14, .32);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #754116, #9b642e 50%, #5c2c09);
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255,255,255,0.1);
+  border: 2px solid #3d2009;
 }
 
 .table::after {
@@ -467,9 +483,10 @@ button.room:hover,
   position: absolute;
   width: 26px;
   height: 32px;
-  border-radius: 3px;
-  background: #5a3215;
-  box-shadow: 0 6px 10px rgba(45, 28, 13, .24);
+  border-radius: 12px;
+  background: radial-gradient(circle at 50% 50%, #6e3d1a, #4a270f);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255,255,255,0.1);
+  border: 1px solid #2b1506;
 }
 
 .chair-n { left: 45%; top: 14%; }
@@ -481,9 +498,10 @@ button.room:hover,
 
 .sofa {
   position: absolute;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #242424, #3c3c3c);
-  box-shadow: 0 12px 18px rgba(25, 25, 25, .34);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3a3a3a, #1f1f1f);
+  box-shadow: 0 16px 24px rgba(0, 0, 0, 0.4), inset 0 2px 5px rgba(255,255,255,0.1);
+  border: 2px solid #141414;
 }
 
 .sofa-main {
@@ -506,9 +524,10 @@ button.room:hover,
   bottom: 33%;
   width: 21%;
   height: 17%;
-  border-radius: 3px;
-  background: linear-gradient(135deg, #b07b45, #d0a16e);
-  box-shadow: 0 8px 14px rgba(62, 39, 18, .23);
+  border-radius: 6px;
+  background: linear-gradient(135deg, #b07b45, #8a5d30);
+  box-shadow: 0 12px 18px rgba(0, 0, 0, 0.3), inset 0 2px 3px rgba(255,255,255,0.2);
+  border: 2px solid #523719;
 }
 
 .tv-unit {
@@ -517,9 +536,9 @@ button.room:hover,
   top: 30%;
   width: 18px;
   height: 42%;
-  border-radius: 3px;
-  background: #5a3519;
-  box-shadow: -10px 9px 16px rgba(45, 30, 18, .23);
+  border-radius: 4px;
+  background: linear-gradient(90deg, #5a3519, #361f0e);
+  box-shadow: -10px 10px 20px rgba(0, 0, 0, 0.3);
 }
 
 .tv-unit::after {
@@ -545,8 +564,9 @@ button.room:hover,
   width: 46px;
   height: 70px;
   border-radius: 24px 24px 18px 18px;
-  background: linear-gradient(#fff, #dcdcdc);
-  box-shadow: 0 10px 13px rgba(40, 40, 40, .18);
+  background: radial-gradient(circle at 50% 30%, #ffffff, #dcdcdc);
+  box-shadow: 0 12px 18px rgba(0, 0, 0, 0.2), inset 0 -4px 6px rgba(0,0,0,0.1);
+  border: 1px solid #c0c0c0;
 }
 
 .toilet::before {
@@ -566,9 +586,10 @@ button.room:hover,
   top: 14%;
   width: 50px;
   height: 24px;
-  border-radius: 4px;
-  background: linear-gradient(#595f61, #2d3335);
-  box-shadow: 0 8px 12px rgba(25, 25, 25, .2);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #6c7375, #2d3335);
+  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255,255,255,0.2);
+  border: 1px solid #1a1e20;
 }
 
 .door {
@@ -636,10 +657,10 @@ button.room:hover,
   border: 3px solid #5f2f12;
   border-radius: 4px;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, .12), transparent 35%),
-    linear-gradient(135deg, #743816, #a96b31);
-  box-shadow: 0 9px 14px rgba(56, 33, 16, .26);
-  transition: transform .28s ease;
+    linear-gradient(90deg, rgba(255, 255, 255, .15), transparent 25%),
+    linear-gradient(135deg, #8a431a, #5c2c09);
+  box-shadow: 0 12px 18px rgba(0, 0, 0, 0.3);
+  transition: transform .3s cubic-bezier(0.4, 0.0, 0.2, 1);
   transform-origin: left center;
 }
 
@@ -656,7 +677,7 @@ button.room:hover,
 
 .front-door.is-on .door-leaf,
 .front-door:has(.is-on) .door-leaf {
-  transform: perspective(600px) rotateY(-85deg);
+  transform: rotate(-24deg);
 }
 
 .door-indicator,
@@ -681,7 +702,8 @@ button.room:hover,
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, .5);
+  background: rgba(255, 255, 255, .7);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
   pointer-events: auto;
 }
 
@@ -828,6 +850,18 @@ button.room:hover,
   gap: 12px;
 }
 
+.connection.is-disconnected {
+  color: #f85149;
+  background: rgba(248, 81, 73, 0.1);
+  border-color: rgba(248, 81, 73, 0.2);
+}
+
+.connection-dot.is-disconnected {
+  background: #f85149;
+  box-shadow: 0 0 0 0 rgba(248, 81, 73, 0);
+  animation: none;
+}
+
 .device-card,
 .history-item {
   display: grid;
@@ -927,11 +961,18 @@ button.room:hover,
 .is-loading {
   position: relative;
   pointer-events: none;
+}
+
+.control-btn.is-loading,
+.switch.is-loading {
   color: transparent !important;
 }
-.is-loading > * {
+
+.control-btn.is-loading > *,
+.switch.is-loading > * {
   visibility: hidden;
 }
+
 .is-loading::after {
   content: "";
   position: absolute;
@@ -944,6 +985,11 @@ button.room:hover,
   border-radius: 50%;
   animation: spin-loader 0.8s linear infinite;
   visibility: visible;
+}
+
+.lamp-group.is-loading::after {
+  border: 3px solid rgba(0, 0, 0, 0.2);
+  border-top-color: #333;
 }
 
 @keyframes spin-loader {

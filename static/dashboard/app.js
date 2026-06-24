@@ -225,5 +225,47 @@ refreshButton.addEventListener("click", async () => {
 loadDevices();
 loadHistory();
 syncWeather();
+
 // Sync weather every 1 minute to keep it up to date
 setInterval(syncWeather, 60000);
+
+let wasConnected = null;
+const systemConnection = document.getElementById("systemConnection");
+
+async function checkSystemStatus() {
+  try {
+    const response = await fetch("/api/system/status/");
+    const data = await response.json();
+    
+    if (!systemConnection) return;
+    
+    const dot = systemConnection.querySelector(".connection-dot");
+    const text = systemConnection.querySelector("span:last-child");
+
+    if (data.connected) {
+      systemConnection.classList.remove("is-disconnected");
+      dot.classList.remove("is-disconnected");
+      text.textContent = "Conectado";
+      
+      if (wasConnected === false) {
+        showToast("✅ Arduino Conectado");
+      }
+      wasConnected = true;
+    } else {
+      systemConnection.classList.add("is-disconnected");
+      dot.classList.add("is-disconnected");
+      text.textContent = "Desconectado";
+      
+      if (wasConnected === true) {
+        showToast("⚠️ Arduino Desconectado");
+      }
+      wasConnected = false;
+    }
+  } catch (error) {
+    console.error("Error al verificar conexion:", error);
+  }
+}
+
+// Initial check and start polling every 5 seconds
+checkSystemStatus();
+setInterval(checkSystemStatus, 5000);
