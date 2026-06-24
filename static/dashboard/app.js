@@ -2,6 +2,18 @@ const deviceList = document.querySelector("#deviceList");
 const historyList = document.querySelector("#history");
 const toast = document.querySelector("#toast");
 const refreshButton = document.querySelector("#refresh");
+const themeToggleBtn = document.querySelector("#themeToggle");
+
+const storedTheme = localStorage.getItem("theme");
+if (storedTheme === "day") {
+  document.body.classList.add("is-day");
+}
+
+themeToggleBtn?.addEventListener("click", () => {
+  document.body.classList.toggle("is-day");
+  const isDay = document.body.classList.contains("is-day");
+  localStorage.setItem("theme", isDay ? "day" : "night");
+});
 
 const kindLabels = {
   light: "Luz",
@@ -76,12 +88,27 @@ function renderHistory(events) {
     const item = document.createElement("article");
     item.className = "history-item";
 
-    const actionEmoji = event.action.includes("encender") ? "+" : "-";
+    const isActionOn = event.action.includes("encender") || event.action.includes("abrir");
+    const isActionOff = event.action.includes("apagar") || event.action.includes("cerrar");
+    
+    let badgeClass = "badge-info";
+    let badgeText = "INFO";
+    if (isActionOn) {
+      badgeClass = "badge-on";
+      badgeText = "ON";
+    } else if (isActionOff) {
+      badgeClass = "badge-off";
+      badgeText = "OFF";
+    }
+    
     const commandText = event.command || "Comando desconocido";
 
     item.innerHTML = `
       <span class="event-time">${event.created_at}</span>
-      <span class="event-message">${actionEmoji} ${commandText} - ${event.message}</span>
+      <span class="event-message">
+        <span class="badge ${badgeClass}">${badgeText}</span>
+        ${commandText} - ${event.message}
+      </span>
     `;
     historyList.appendChild(item);
   });
@@ -126,6 +153,9 @@ async function toggleDevice(deviceKey, forcedState = null) {
   const currentState = lamp ? lamp.classList.contains("is-on") : element.classList.contains("is-on");
   const nextState = forcedState !== null ? forcedState : !currentState;
 
+  // Visual loading state
+  element.classList.add("is-loading");
+
   try {
     const response = await fetch(`/api/devices/${deviceKey}/toggle/`, {
       method: "POST",
@@ -150,6 +180,8 @@ async function toggleDevice(deviceKey, forcedState = null) {
   } catch (error) {
     console.error("Error al cambiar dispositivo:", error);
     showToast("Error de conexion");
+  } finally {
+    element.classList.remove("is-loading");
   }
 }
 
