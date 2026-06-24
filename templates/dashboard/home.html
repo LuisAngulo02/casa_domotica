@@ -4,14 +4,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Casa Domotica Inteligente</title>
+  <title>Casa Domotica Inteligente - Maqueta 3D</title>
   <link rel="stylesheet" href="{% static 'dashboard/styles.css' %}">
 </head>
 <body>
   <main class="shell">
     <section class="topbar" aria-label="Resumen del sistema">
       <div>
-        <p class="eyebrow">🏠 Sistema Inteligente</p>
+        <p class="eyebrow">Sistema inteligente</p>
         <h1>Casa Domotica Inteligente</h1>
       </div>
       <div class="connection">
@@ -21,102 +21,107 @@
     </section>
 
     <section class="workspace">
-      <div class="plan-wrap">
-        <div class="house-plan" aria-label="Plano interactivo de la casa">
-          <!-- Estructura principal de la casa (vista superior) -->
-          <svg viewBox="0 0 100 100" class="floorplan-svg" aria-label="Plano de la casa">
-            <!-- Habitación 1 (arriba izquierda) -->
-            <g class="room" data-room="1">
-              <rect x="5" y="5" width="30" height="30" class="room-bg" />
-              <text x="20" y="30" class="room-label">3</text>
-            </g>
-            <!-- Lámpara Habitación 1 -->
-            <g class="lamp-group" data-device="luz_habitacion_1">
-              <circle cx="20" cy="15" r="4.5" class="lamp" />
-            </g>
+      <div class="model-card">
+        <div class="model-stage" aria-label="Maqueta 3D interactiva de la casa">
+          <div class="house-model">
+            <div class="outer-frame"></div>
+            <div class="front-yard">
+              <span class="plant plant-a"></span>
+              <span class="plant plant-b"></span>
+              <span class="plant plant-c"></span>
+              <span class="plant plant-d"></span>
+              <span class="garden-lamp garden-lamp-left lamp-group lamp-bulb" data-device="luz_jardin"></span>
+              <span class="garden-lamp garden-lamp-right lamp-group lamp-bulb" data-device="luz_jardin"></span>
+              <span class="walkway"></span>
+            </div>
 
-            <!-- Habitación 2 (arriba derecha) -->
-            <g class="room" data-room="2">
-              <rect x="65" y="5" width="30" height="30" class="room-bg" />
-              <text x="80" y="30" class="room-label">4</text>
-            </g>
-            <!-- Lámpara Habitación 2 -->
-            <g class="lamp-group" data-device="luz_habitacion_2">
-              <circle cx="80" cy="15" r="4.5" class="lamp" />
-            </g>
+            <div class="floor-grid">
+              <button class="room room-bedroom-left lamp-group" type="button" data-device="luz_habitacion_1" aria-label="Habitacion 1">
+                <span class="ceiling-light lamp lamp-green"></span>
+                <span class="window window-top"></span>
+                <span class="bed bed-green"></span>
+                <span class="nightstand stand-left"></span>
+                <span class="nightstand stand-right"></span>
+                <span class="plant pot-left"></span>
+              </button>
 
-            <!-- Baño (centro arriba) -->
-            <g class="room bathroom" data-room="bath">
-              <rect x="37" y="5" width="26" height="30" class="room-bg" />
-              <text x="50" y="30" class="room-label">2</text>
-            </g>
+              <div class="room room-bath" aria-label="Bano">
+                <span class="window window-top"></span>
+                <span class="toilet"></span>
+                <span class="sink"></span>
+                <span class="door door-left"></span>
+                <span class="door door-right"></span>
+              </div>
 
-            <!-- Sala (centro) -->
-            <g class="room" data-room="3">
-              <rect x="5" y="38" width="30" height="35" class="room-bg" />
-              <text x="20" y="58" class="room-label">6</text>
-            </g>
-            <!-- Lámpara Sala -->
-            <g class="lamp-group" data-device="luz_sala">
-              <circle cx="20" cy="48" r="4.5" class="lamp" />
-            </g>
+              <button class="room room-bedroom-right lamp-group" type="button" data-device="luz_habitacion_2" aria-label="Habitacion 2">
+                <span class="ceiling-light lamp lamp-green"></span>
+                <span class="window window-top"></span>
+                <span class="bed bed-purple"></span>
+                <span class="nightstand stand-left"></span>
+                <span class="nightstand stand-right"></span>
+                <span class="plant pot-right"></span>
+              </button>
 
-            <!-- Cocina (derecha) -->
-            <g class="room" data-room="4">
-              <rect x="65" y="38" width="30" height="35" class="room-bg" />
-              <text x="80" y="58" class="room-label">5</text>
-            </g>
-            <!-- Lámpara Cocina -->
-            <g class="lamp-group" data-device="luz_cocina">
-              <circle cx="80" cy="48" r="4.5" class="lamp" />
-            </g>
+              <button class="room room-kitchen lamp-group" type="button" data-device="luz_cocina" aria-label="Cocina">
+                <span class="ceiling-light lamp lamp-green"></span>
+                <span class="counter counter-long"></span>
+                <span class="counter counter-low"></span>
+                <span class="stove"></span>
+                <span class="fridge"></span>
+              </button>
 
-            <!-- Pasillo (centro) -->
-            <g class="room hallway" data-room="hall">
-              <rect x="37" y="38" width="26" height="35" class="room-bg" />
-              <text x="50" y="58" class="room-label">1</text>
-            </g>
+              <div class="room room-dining" aria-label="Comedor">
+                <span class="table"></span>
+                <span class="chair chair-n"></span>
+                <span class="chair chair-s"></span>
+                <span class="chair chair-e"></span>
+                <span class="chair chair-w"></span>
+                <span class="chair chair-ne"></span>
+                <span class="chair chair-sw"></span>
+              </div>
 
-            <!-- Entrada (abajo) -->
-            <g class="room entrance" data-room="entrance">
-              <rect x="20" y="75" width="60" height="20" class="room-bg" />
-              <text x="50" y="87" class="room-label">7 - Entrada</text>
-            </g>
+              <button class="room room-living lamp-group" type="button" data-device="luz_sala" aria-label="Sala">
+                <span class="ceiling-light lamp lamp-green"></span>
+                <span class="sofa sofa-main"></span>
+                <span class="sofa sofa-chaise"></span>
+                <span class="coffee-table"></span>
+                <span class="tv-unit"></span>
+                <span class="plant living-plant"></span>
+              </button>
 
-            <!-- Jardín/Exterior (lado derecho) -->
-            <g class="room garden" data-room="garden">
-              <rect x="77" y="50" width="18" height="45" class="room-bg" />
-              <text x="86" y="80" class="room-label">9</text>
-            </g>
-            <!-- Lámpara Jardín -->
-            <g class="lamp-group outdoor" data-device="luz_jardin">
-              <circle cx="86" cy="60" r="3" class="lamp" />
-            </g>
-          </svg>
-
-          <!-- Controles adicionales debajo del plano -->
-          <div class="extra-controls">
-            <button class="control-btn door-btn" data-device="puerta" aria-label="Puerta principal">
-              <span class="icon">🚪</span>
-              <span class="label">Puerta</span>
-            </button>
-            <button class="control-btn lock-btn" data-device="cerradura" aria-label="Cerradura">
-              <span class="icon">🔒</span>
-              <span class="label">Cerradura</span>
-            </button>
+              <div class="room room-entry" aria-label="Entrada">
+                <button class="front-door lamp-group" type="button" data-device="puerta" aria-label="Puerta principal">
+                  <span class="door-leaf"></span>
+                  <span class="lamp lamp-red door-indicator"></span>
+                </button>
+                <button class="lock-chip lamp-group" type="button" data-device="cerradura" aria-label="Cerradura">
+                  <span class="lamp lamp-pink lock-indicator"></span>
+                </button>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div class="quick-controls" aria-label="Controles principales">
+          <button class="control-btn door-btn" data-device="puerta" type="button">
+            <span class="icon" aria-hidden="true">P</span>
+            <span class="label">Puerta</span>
+          </button>
+          <button class="control-btn lock-btn" data-device="cerradura" type="button">
+            <span class="icon" aria-hidden="true">C</span>
+            <span class="label">Cerradura</span>
+          </button>
         </div>
       </div>
 
       <aside class="panel" aria-label="Estado de dispositivos">
         <div class="panel-header">
-          <h2>📋 Control</h2>
-          <button id="refresh" class="icon-button" type="button" aria-label="Actualizar estados">⟳</button>
+          <h2>Control</h2>
+          <button id="refresh" class="icon-button" type="button" aria-label="Actualizar estados">R</button>
         </div>
         <div id="deviceList" class="device-list"></div>
-
         <div class="panel-header history-title">
-          <h2>📝 Últimos eventos</h2>
+          <h2>Ultimos eventos</h2>
         </div>
         <div id="history" class="history"></div>
       </aside>

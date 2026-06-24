@@ -4,9 +4,9 @@ const toast = document.querySelector("#toast");
 const refreshButton = document.querySelector("#refresh");
 
 const kindLabels = {
-  light: "💡 Luz",
-  door: "🚪 Puerta",
-  lock: "🔒 Cerradura",
+  light: "Luz",
+  door: "Puerta",
+  lock: "Cerradura",
 };
 
 function getCookie(name) {
@@ -26,20 +26,18 @@ function showToast(message) {
 }
 
 function setHotspotState(device) {
-  // Actualizar lámparas en el SVG - buscar por lamp-group
-  const lampGroup = document.querySelector(`[data-device="${device.key}"].lamp-group`);
-  if (lampGroup) {
-    const circle = lampGroup.querySelector(".lamp");
-    if (circle) {
-      circle.classList.toggle("is-on", device.is_on);
-    }
-  }
+  const deviceElements = document.querySelectorAll(`[data-device="${device.key}"]`);
+  deviceElements.forEach((element) => {
+    element.classList.toggle("is-on", device.is_on);
 
-  // Actualizar botones de control (puerta, cerradura)
-  const controlBtn = document.querySelector(`[data-device="${device.key}"].control-btn`);
-  if (controlBtn) {
-    controlBtn.classList.toggle("is-on", device.is_on);
-  }
+    const lamps = element.matches(".lamp, .lamp-bulb")
+      ? [element]
+      : element.querySelectorAll(".lamp, .lamp-bulb");
+
+    lamps.forEach((lamp) => {
+      lamp.classList.toggle("is-on", device.is_on);
+    });
+  });
 }
 
 function renderDevices(devices) {
@@ -49,9 +47,9 @@ function renderDevices(devices) {
 
     const card = document.createElement("article");
     card.className = "device-card";
-    
+
     const kindLabel = kindLabels[device.kind] || "Dispositivo";
-    
+
     card.innerHTML = `
       <div>
         <div class="device-name">${device.label}</div>
@@ -68,17 +66,17 @@ function renderDevices(devices) {
 function renderHistory(events) {
   historyList.innerHTML = "";
   if (!events.length) {
-    historyList.innerHTML = '<div class="history-item"><span class="event-time">--:--</span><span class="event-message">Sin eventos todavía</span></div>';
+    historyList.innerHTML = '<div class="history-item"><span class="event-time">--:--</span><span class="event-message">Sin eventos todavia</span></div>';
     return;
   }
 
   events.forEach((event) => {
     const item = document.createElement("article");
     item.className = "history-item";
-    
-    const actionEmoji = event.action.includes("encender") ? "✓" : "✗";
+
+    const actionEmoji = event.action.includes("encender") ? "+" : "-";
     const commandText = event.command || "Comando desconocido";
-    
+
     item.innerHTML = `
       <span class="event-time">${event.created_at}</span>
       <span class="event-message">${actionEmoji} ${commandText} - ${event.message}</span>
@@ -94,7 +92,7 @@ async function loadDevices() {
     renderDevices(data.devices);
   } catch (error) {
     console.error("Error cargando dispositivos:", error);
-    showToast("❌ Error al cargar dispositivos");
+    showToast("Error al cargar dispositivos");
   }
 }
 
@@ -113,14 +111,17 @@ async function toggleDevice(deviceKey, forcedState = null) {
   if (!element) {
     element = document.querySelector(`[data-device="${deviceKey}"].control-btn`);
   }
-  
   if (!element) {
-    console.warn(`No se encontró elemento para ${deviceKey}`);
+    element = document.querySelector(`[data-device="${deviceKey}"]`);
+  }
+
+  if (!element) {
+    console.warn(`No se encontro elemento para ${deviceKey}`);
     return;
   }
 
-  const circle = element.querySelector(".lamp");
-  const currentState = circle ? circle.classList.contains("is-on") : element.classList.contains("is-on");
+  const lamp = element.matches(".lamp, .lamp-bulb") ? element : element.querySelector(".lamp, .lamp-bulb");
+  const currentState = lamp ? lamp.classList.contains("is-on") : element.classList.contains("is-on");
   const nextState = forcedState !== null ? forcedState : !currentState;
 
   try {
@@ -136,17 +137,17 @@ async function toggleDevice(deviceKey, forcedState = null) {
     const data = await response.json();
 
     if (!response.ok) {
-      showToast("❌ " + (data.message || data.error || "No se pudo enviar el comando"));
+      showToast(data.message || data.error || "No se pudo enviar el comando");
       return;
     }
 
     setHotspotState(data.device);
     await loadDevices();
     await loadHistory();
-    showToast("✅ " + (data.message || "Comando enviado"));
+    showToast(data.message || "Comando enviado");
   } catch (error) {
     console.error("Error al cambiar dispositivo:", error);
-    showToast("❌ Error de conexión");
+    showToast("Error de conexion");
   }
 }
 
@@ -168,7 +169,7 @@ refreshButton.addEventListener("click", async () => {
   refreshButton.style.opacity = "0.6";
   await loadDevices();
   await loadHistory();
-  showToast("🔄 Estados actualizados");
+  showToast("Estados actualizados");
   refreshButton.style.opacity = "1";
 });
 
