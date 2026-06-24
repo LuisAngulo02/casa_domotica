@@ -25,6 +25,9 @@
         <div class="model-stage" aria-label="Maqueta 3D interactiva de la casa">
           <div class="house-model">
             <div class="outer-frame"></div>
+            <button class="pir-sensor lamp-group" type="button" data-device="sensor_pir" aria-label="Sensor PIR" title="Sensor PIR">
+              <span class="sensor-eye"></span>
+            </button>
             <div class="front-yard">
               <span class="plant plant-a"></span>
               <span class="plant plant-b"></span>
@@ -82,6 +85,10 @@
 
               <button class="room room-living lamp-group" type="button" data-device="luz_sala" aria-label="Sala">
                 <span class="ceiling-light lamp lamp-green"></span>
+                <span class="fan lamp-group" data-device="ventilador" title="Ventilador (Manual)">
+                  <span class="fan-blade"></span>
+                  <span class="fan-blade"></span>
+                </span>
                 <span class="sofa sofa-main"></span>
                 <span class="sofa sofa-chaise"></span>
                 <span class="coffee-table"></span>
@@ -110,6 +117,14 @@
           <button class="control-btn lock-btn" data-device="cerradura" type="button">
             <span class="icon" aria-hidden="true">C</span>
             <span class="label">Cerradura</span>
+          </button>
+          <button class="control-btn fan-btn" data-device="ventilador" type="button">
+            <span class="icon" aria-hidden="true">V</span>
+            <span class="label">Ventilador</span>
+          </button>
+          <button class="control-btn pir-btn" data-device="sensor_pir" type="button">
+            <span class="icon" aria-hidden="true">S</span>
+            <span class="label">PIR</span>
           </button>
         </div>
       </div>

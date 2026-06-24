@@ -9,6 +9,8 @@ DEFAULT_DEVICES = [
     ("luz_jardin", "Jardin", DeviceState.LIGHT),
     ("puerta", "Puerta principal", DeviceState.DOOR),
     ("cerradura", "Cerradura", DeviceState.LOCK),
+    ("sensor_pir", "Sensor PIR", DeviceState.SENSOR),
+    ("ventilador", "Ventilador Sala", DeviceState.FAN),
 ]
 
 DEVICE_COMMANDS = {
@@ -19,4 +21,6 @@ DEVICE_COMMANDS = {
     "luz_jardin": {"on": "EXT_ON", "off": "EXT_OFF"},
     "puerta": {"on": "DOOR_OPEN", "off": "DOOR_CLOSE"},
     "cerradura": {"on": "LOCK_ON", "off": "LOCK_OFF"},
+    "sensor_pir": {"on": "PIR_ON", "off": "PIR_OFF"},
+    "ventilador": {"on": "FAN_ON", "off": "FAN_OFF"},
 }

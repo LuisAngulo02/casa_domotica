@@ -5,11 +5,15 @@ class DeviceState(models.Model):
     LIGHT = "light"
     DOOR = "door"
     LOCK = "lock"
+    SENSOR = "sensor"
+    FAN = "fan"
 
     KIND_CHOICES = [
         (LIGHT, "Luz"),
         (DOOR, "Puerta"),
         (LOCK, "Cerradura"),
+        (SENSOR, "Sensor"),
+        (FAN, "Ventilador"),
     ]
 
     key = models.SlugField(unique=True)

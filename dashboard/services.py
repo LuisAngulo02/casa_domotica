@@ -51,6 +51,23 @@ def toggle_device_state(device, turn_on):
             message=result["message"],
         )
 
+        if device.key == "sensor_pir" and result["status"] != EventLog.ERROR:
+            lights = DeviceState.objects.filter(kind=DeviceState.LIGHT)
+            for light in lights:
+                if light.is_on != turn_on:
+                    light_command = command_for(light.key, turn_on)
+                    light_result = send_command(light_command)
+                    if light_result["status"] != EventLog.ERROR:
+                        light.is_on = turn_on
+                        light.save(update_fields=["is_on", "updated_at"])
+                        EventLog.objects.create(
+                            device_key=light.key,
+                            action="encender" if turn_on else "apagar",
+                            command=light_command,
+                            status=light_result["status"],
+                            message="Simulado por PIR" if result["status"] == EventLog.SIMULATED else "Activado por PIR",
+                        )
+
     return {
         "device": device,
         "command": command,

@@ -7,6 +7,8 @@ const kindLabels = {
   light: "Luz",
   door: "Puerta",
   lock: "Cerradura",
+  sensor: "Sensor",
+  fan: "Ventilador",
 };
 
 function getCookie(name) {
@@ -165,13 +167,31 @@ document.addEventListener("click", (event) => {
   }
 });
 
+async function syncWeather() {
+  try {
+    const response = await fetch("/api/sync-weather/");
+    const data = await response.json();
+    if (response.ok) {
+      console.log(data.message);
+      await loadDevices();
+      await loadHistory();
+    }
+  } catch (error) {
+    console.error("Error sincronizando clima:", error);
+  }
+}
+
 refreshButton.addEventListener("click", async () => {
   refreshButton.style.opacity = "0.6";
+  await syncWeather();
   await loadDevices();
   await loadHistory();
-  showToast("Estados actualizados");
+  showToast("Estados y clima actualizados");
   refreshButton.style.opacity = "1";
 });
 
 loadDevices();
 loadHistory();
+syncWeather();
+// Sync weather every 1 minute to keep it up to date
+setInterval(syncWeather, 60000);
