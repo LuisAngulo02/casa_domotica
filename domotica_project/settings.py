@@ -76,4 +76,4 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Ajusta estos valores cuando conectes el Arduino por USB.
 ARDUINO_SERIAL_PORT = os.getenv("ARDUINO_SERIAL_PORT", "COM3")
 ARDUINO_BAUD_RATE = int(os.getenv("ARDUINO_BAUD_RATE", "9600"))
-ARDUINO_SIMULATION_MODE = env_bool("ARDUINO_SIMULATION_MODE", False) # activar para pruebas
+ARDUINO_SIMULATION_MODE = env_bool("ARDUINO_SIMULATION_MODE", True) # activar para pruebas

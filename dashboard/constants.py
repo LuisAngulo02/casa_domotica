@@ -24,3 +24,15 @@ DEVICE_COMMANDS = {
     "sensor_pir": {"on": "PIR_ON", "off": "PIR_OFF"},
     "ventilador": {"on": "FAN_ON", "off": "FAN_OFF"},
 }
+
+SYNC_ORDER = [
+    "luz_habitacion_1",
+    "luz_habitacion_2",
+    "luz_sala",
+    "luz_cocina",
+    "luz_jardin",
+    "puerta",
+    "cerradura",
+    "sensor_pir",
+    "ventilador",
+]

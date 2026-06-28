@@ -13,4 +13,5 @@ urlpatterns = [
     path("api/temperature/", views.update_temperature, name="update_temperature"),
     path("api/sync-weather/", views.sync_weather, name="sync_weather"),
     path("api/system/status/", views.system_status, name="system_status"),
+    path("api/sync-physical/", views.sync_physical, name="sync_physical"),
 ]

@@ -13,6 +13,7 @@ from .services import (
     serialize_device,
     serialize_event,
     toggle_device_state,
+    sync_physical_state,
 )
 from .serial_bridge import check_connection
 
@@ -146,3 +147,9 @@ def sync_weather(request):
 def system_status(request):
     status = check_connection()
     return JsonResponse(status)
+
+@require_GET
+def sync_physical(request):
+    ensure_default_devices()
+    result = sync_physical_state()
+    return JsonResponse(result)

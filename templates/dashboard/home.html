@@ -9,6 +9,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'dashboard/styles.css' %}">
+  <!-- Import map for Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
   <main class="shell">
@@ -31,90 +40,7 @@
     <section class="workspace">
       <div class="model-card">
         <div class="model-stage" aria-label="Maqueta 3D interactiva de la casa">
-          <div class="house-model">
-            <div class="outer-frame"></div>
-            <button class="pir-sensor lamp-group" type="button" data-device="sensor_pir" aria-label="Sensor PIR" title="Sensor PIR">
-              <span class="sensor-eye"></span>
-            </button>
-            <div class="front-yard">
-              <span class="plant plant-a"></span>
-              <span class="plant plant-b"></span>
-              <span class="plant plant-c"></span>
-              <span class="plant plant-d"></span>
-              <span class="garden-lamp garden-lamp-left lamp-group lamp-bulb" data-device="luz_jardin"></span>
-              <span class="garden-lamp garden-lamp-right lamp-group lamp-bulb" data-device="luz_jardin"></span>
-              <span class="walkway"></span>
-            </div>
-
-            <div class="floor-grid">
-              <button class="room room-bedroom-left lamp-group" type="button" data-device="luz_habitacion_1" aria-label="Habitacion 1">
-                <span class="ceiling-light lamp lamp-green"></span>
-                <span class="window window-top"></span>
-                <span class="bed bed-green"></span>
-                <span class="nightstand stand-left"></span>
-                <span class="nightstand stand-right"></span>
-                <span class="plant pot-left"></span>
-              </button>
-
-              <div class="room room-bath" aria-label="Bano">
-                <span class="window window-top"></span>
-                <span class="toilet"></span>
-                <span class="sink"></span>
-                <span class="door door-left"></span>
-                <span class="door door-right"></span>
-              </div>
-
-              <button class="room room-bedroom-right lamp-group" type="button" data-device="luz_habitacion_2" aria-label="Habitacion 2">
-                <span class="ceiling-light lamp lamp-green"></span>
-                <span class="window window-top"></span>
-                <span class="bed bed-purple"></span>
-                <span class="nightstand stand-left"></span>
-                <span class="nightstand stand-right"></span>
-                <span class="plant pot-right"></span>
-              </button>
-
-              <button class="room room-kitchen lamp-group" type="button" data-device="luz_cocina" aria-label="Cocina">
-                <span class="ceiling-light lamp lamp-green"></span>
-                <span class="counter counter-long"></span>
-                <span class="counter counter-low"></span>
-                <span class="stove"></span>
-                <span class="fridge"></span>
-              </button>
-
-              <div class="room room-dining" aria-label="Comedor">
-                <span class="table"></span>
-                <span class="chair chair-n"></span>
-                <span class="chair chair-s"></span>
-                <span class="chair chair-e"></span>
-                <span class="chair chair-w"></span>
-                <span class="chair chair-ne"></span>
-                <span class="chair chair-sw"></span>
-              </div>
-
-              <button class="room room-living lamp-group" type="button" data-device="luz_sala" aria-label="Sala">
-                <span class="ceiling-light lamp lamp-green"></span>
-                <span class="fan lamp-group" data-device="ventilador" title="Ventilador (Manual)">
-                  <span class="fan-blade"></span>
-                  <span class="fan-blade"></span>
-                </span>
-                <span class="sofa sofa-main"></span>
-                <span class="sofa sofa-chaise"></span>
-                <span class="coffee-table"></span>
-                <span class="tv-unit"></span>
-                <span class="plant living-plant"></span>
-              </button>
-
-              <div class="room room-entry" aria-label="Entrada">
-                <button class="front-door lamp-group" type="button" data-device="puerta" aria-label="Puerta principal">
-                  <span class="door-leaf"></span>
-                  <span class="lamp lamp-red door-indicator"></span>
-                </button>
-                <button class="lock-chip lamp-group" type="button" data-device="cerradura" aria-label="Cerradura">
-                  <span class="lamp lamp-pink lock-indicator"></span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <canvas id="three-canvas"></canvas>
         </div>
 
         <div class="quick-controls" aria-label="Controles principales">
@@ -162,6 +88,6 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="{% static 'dashboard/app.js' %}"></script>
+  <script type="module" src="{% static 'dashboard/app.js' %}"></script>
 </body>
 </html>
