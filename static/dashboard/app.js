@@ -363,8 +363,8 @@ window.ThreeScene = {
     "luz_cocina": "led_kitchen",
     "luz_jardin": "led_exterior",
     "puerta": "door_main",
-    "cerradura": "look_door",
-    "ventilador": "fan_blade", // We will find all that start with this or handle fan differently
+    "cerradura": "lock_door",
+    "ventilador": "fan_blade", 
   },
 
   init() {
@@ -454,9 +454,10 @@ window.ThreeScene = {
           "door_main",
           "door_panel_lower",
           "door_panel_upper",
-          "door_windows_frame",
+          "door_window_frame",
           "door_window_glass",
-          "look_door"
+          "door_knob",
+          "lock_door"
         ];
         
         const partsToAttach = [];
@@ -570,7 +571,7 @@ window.ThreeScene = {
       const clickedMesh = intersects[0].object;
       
       const meshName = clickedMesh.name.toLowerCase();
-      if (meshName.includes("look_door")) {
+      if (meshName.includes("lock_door") || meshName.includes("wall_led_indicator")) {
          toggleDevice("cerradura");
          return;
       } else if (meshName.includes("door_")) {
@@ -605,7 +606,7 @@ window.ThreeScene = {
       }
     } else if (deviceKey === "cerradura") {
       this.model.traverse(child => {
-        if (child.name.toLowerCase().includes("look_door") && child.isMesh) {
+        if ((child.name.toLowerCase().includes("lock_door") || child.name.toLowerCase().includes("wall_led_indicator")) && child.isMesh) {
            const mats = Array.isArray(child.material) ? child.material : [child.material];
            mats.forEach(mat => {
               if (mat) {
