@@ -391,10 +391,16 @@ window.ThreeScene = {
     this.scene.add(ambientLight);
     
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(10, 20, 10);
+    dirLight.position.set(20, 30, 20);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 2048;
     dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.left = -30;
+    dirLight.shadow.camera.right = 30;
+    dirLight.shadow.camera.top = 30;
+    dirLight.shadow.camera.bottom = -30;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 100;
     this.scene.add(dirLight);
 
     // Load Model
@@ -403,6 +409,11 @@ window.ThreeScene = {
       this.model = gltf.scene;
       
       this.model.traverse((child) => {
+        // Ocultar planos de referencia exportados por error (ej. "Plano", "Plano.001")
+        if (child.name.toLowerCase().startsWith("plano")) {
+          child.visible = false;
+        }
+        
         this.meshes[child.name] = child;
         if (child.isMesh) {
           child.castShadow = true;
@@ -576,6 +587,9 @@ window.ThreeScene = {
          return;
       } else if (meshName.includes("door_")) {
          toggleDevice("puerta");
+         return;
+      } else if (meshName.includes("fan_")) {
+         toggleDevice("ventilador");
          return;
       }
       
