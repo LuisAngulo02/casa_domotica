@@ -67,6 +67,22 @@ const kindLabels = {
   fan: "Ventilador",
 };
 
+// SVG icons for each device kind
+const kindIcons = {
+  light: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`,
+  door: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M2 20h20"/><path d="M14 12v.01"/></svg>`,
+  lock: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  sensor: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/><circle cx="12" cy="12" r="4"/></svg>`,
+  fan: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/></svg>`,
+};
+
+// Grouping configuration for remote sections
+const sectionConfig = [
+  { id: "lights", label: "Luces", kinds: ["light"] },
+  { id: "access", label: "Accesos", kinds: ["door", "lock"] },
+  { id: "other", label: "Otros", kinds: ["sensor", "fan"] },
+];
+
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -106,24 +122,35 @@ function setHotspotState(device) {
 
 function renderDevices(devices) {
   deviceList.innerHTML = "";
-  devices.forEach((device) => {
-    setHotspotState(device);
 
-    const card = document.createElement("article");
-    card.className = "device-card";
+  sectionConfig.forEach((section) => {
+    const sectionDevices = devices.filter((d) => section.kinds.includes(d.kind));
+    if (sectionDevices.length === 0) return;
 
-    const kindLabel = kindLabels[device.kind] || "Dispositivo";
+    // Section label
+    const label = document.createElement("div");
+    label.className = "remote-section-label";
+    label.textContent = section.label;
+    deviceList.appendChild(label);
 
-    card.innerHTML = `
-      <div>
-        <div class="device-name">${device.label}</div>
-        <div class="device-kind">${kindLabel}</div>
-      </div>
-      <button class="switch ${device.is_on ? "is-on" : ""}" type="button" data-device="${device.key}">
-        ${device.is_on ? "Activo" : "Inactivo"}
-      </button>
-    `;
-    deviceList.appendChild(card);
+    // Render each device as a remote button
+    sectionDevices.forEach((device) => {
+      setHotspotState(device);
+
+      const btn = document.createElement("button");
+      btn.className = `remote-btn${device.is_on ? " is-on" : ""}`;
+      btn.setAttribute("data-device", device.key);
+      btn.setAttribute("data-kind", device.kind);
+      btn.type = "button";
+
+      const icon = kindIcons[device.kind] || kindIcons.light;
+
+      btn.innerHTML = `
+        <div class="remote-btn-icon">${icon}</div>
+        <span class="remote-btn-label">${device.label}</span>
+      `;
+      deviceList.appendChild(btn);
+    });
   });
 }
 
@@ -245,7 +272,7 @@ document.addEventListener("click", (event) => {
   }
 
   let button = event.target.closest("[data-device]");
-  if (button && (button.classList.contains("control-btn") || button.classList.contains("switch"))) {
+  if (button && (button.classList.contains("control-btn") || button.classList.contains("switch") || button.classList.contains("remote-btn"))) {
     toggleDevice(button.dataset.device);
     return;
   }
