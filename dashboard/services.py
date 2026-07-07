@@ -74,3 +74,31 @@ def toggle_device_state(device, turn_on):
         "status": result["status"],
         "message": result["message"],
     }
+
+def sync_physical_state():
+    from .constants import SYNC_ORDER
+    result = send_command("SYNC")
+    
+    if result["status"] == "ok" and result["message"].startswith("SYNC:"):
+        try:
+            # Expected format: "SYNC:1,0,1,0,1,0,0,1,0"
+            values = result["message"].split(":")[1].split(",")
+            changed_devices = []
+            
+            with transaction.atomic():
+                for idx, val in enumerate(values):
+                    if idx < len(SYNC_ORDER):
+                        device_key = SYNC_ORDER[idx]
+                        is_on = (val.strip() == "1")
+                        
+                        device = DeviceState.objects.get(key=device_key)
+                        if device.is_on != is_on:
+                            device.is_on = is_on
+                            device.save(update_fields=["is_on", "updated_at"])
+                            changed_devices.append(device)
+            
+            return {"status": "ok", "message": "Sincronizado", "changed": len(changed_devices) > 0}
+        except Exception as e:
+            return {"status": "error", "message": f"Error parseando SYNC: {e}", "changed": False}
+            
+    return {"status": result["status"], "message": result["message"], "changed": False}
