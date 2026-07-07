@@ -16,31 +16,31 @@ const SoundEngine = {
     if (audioCtx.state === "suspended") audioCtx.resume();
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    
+
     osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    
+
     gain.gain.setValueAtTime(vol, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-    
+
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    
+
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
   },
-  
+
   click() {
     this.playTone(600, 'sine', 0.1, 0.1);
     setTimeout(() => this.playTone(800, 'sine', 0.1, 0.05), 50);
   },
-  
+
   success() {
     this.playTone(440, 'sine', 0.1, 0.1);
     setTimeout(() => this.playTone(554, 'sine', 0.1, 0.1), 100);
     setTimeout(() => this.playTone(659, 'sine', 0.3, 0.1), 200);
   },
-  
+
   error() {
     this.playTone(200, 'sawtooth', 0.2, 0.1);
     setTimeout(() => this.playTone(150, 'sawtooth', 0.3, 0.1), 150);
@@ -167,7 +167,7 @@ function renderHistory(events) {
 
     const isActionOn = event.action.includes("encender") || event.action.includes("abrir");
     const isActionOff = event.action.includes("apagar") || event.action.includes("cerrar");
-    
+
     let badgeClass = "badge-info";
     let badgeText = "INFO";
     if (isActionOn) {
@@ -177,7 +177,7 @@ function renderHistory(events) {
       badgeClass = "badge-off";
       badgeText = "OFF";
     }
-    
+
     const commandText = event.command || "Comando desconocido";
 
     item.innerHTML = `
@@ -315,9 +315,9 @@ async function checkSystemStatus() {
   try {
     const response = await fetch("/api/system/status/");
     const data = await response.json();
-    
+
     if (!systemConnection) return;
-    
+
     const dot = systemConnection.querySelector(".connection-dot");
     const text = systemConnection.querySelector("span:last-child");
 
@@ -325,7 +325,7 @@ async function checkSystemStatus() {
       systemConnection.classList.remove("is-disconnected");
       dot.classList.remove("is-disconnected");
       text.textContent = "Conectado";
-      
+
       if (wasConnected === false) {
         showToast("✅ Arduino Conectado");
         SoundEngine.success();
@@ -335,7 +335,7 @@ async function checkSystemStatus() {
       systemConnection.classList.add("is-disconnected");
       dot.classList.add("is-disconnected");
       text.textContent = "Desconectado";
-      
+
       if (wasConnected === true) {
         showToast("⚠️ Arduino Desconectado");
         SoundEngine.error();
@@ -353,11 +353,11 @@ setInterval(checkSystemStatus, 5000);
 
 async function checkPhysicalState() {
   if (!wasConnected) return; // don't poll if disconnected
-  
+
   try {
     const response = await fetch("/api/sync-physical/");
     const data = await response.json();
-    
+
     if (data.status === "ok" && data.changed) {
       await loadDevices();
       await loadHistory();
@@ -388,10 +388,11 @@ window.ThreeScene = {
     "luz_habitacion_2": "led_room2",
     "luz_sala": "led_sala",
     "luz_cocina": "led_kitchen",
+    "luz_bano": "led_bath",
     "luz_jardin": "led_exterior",
     "puerta": "door_main",
     "cerradura": "lock_door",
-    "ventilador": "fan_blade", 
+    "ventilador": "fan_blade",
   },
 
   init() {
@@ -416,7 +417,7 @@ window.ThreeScene = {
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambientLight);
-    
+
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(20, 30, 20);
     dirLight.castShadow = true;
@@ -434,60 +435,60 @@ window.ThreeScene = {
     const loader = new GLTFLoader();
     loader.load('/static/dashboard/casa_domotica_blender.glb', (gltf) => {
       this.model = gltf.scene;
-      
+
       this.model.traverse((child) => {
         // Ocultar planos de referencia exportados por error (ej. "Plano", "Plano.001")
         if (child.name.toLowerCase().startsWith("plano")) {
           child.visible = false;
         }
-        
+
         this.meshes[child.name] = child;
         if (child.isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
           if (child.material) {
             if (Array.isArray(child.material)) {
-               child.material = child.material.map(m => m.clone());
+              child.material = child.material.map(m => m.clone());
             } else {
-               child.material = child.material.clone();
+              child.material = child.material.clone();
             }
           }
         }
       });
-      
+
       // Center model
       const box = new THREE.Box3().setFromObject(this.model);
       const center = box.getCenter(new THREE.Vector3());
       this.model.position.sub(center);
-      
+
       this.scene.add(this.model);
 
       // --- Setup Door Pivot & Group ---
       let doorMain = null;
       this.model.traverse(child => {
         if (child.name.toLowerCase().includes("door_main")) {
-           doorMain = child;
+          doorMain = child;
         }
       });
 
       if (doorMain && doorMain.parent) {
         const doorGroup = new THREE.Group();
         doorMain.parent.add(doorGroup);
-        
+
         if (doorMain.geometry) {
-           doorMain.geometry.computeBoundingBox();
-           const localBox = doorMain.geometry.boundingBox;
-           const hingeLocal = new THREE.Vector3(localBox.min.x, 0, 0);
-           const hingeWorld = doorMain.localToWorld(hingeLocal);
-           doorMain.parent.worldToLocal(hingeWorld);
-           doorGroup.position.copy(hingeWorld);
+          doorMain.geometry.computeBoundingBox();
+          const localBox = doorMain.geometry.boundingBox;
+          const hingeLocal = new THREE.Vector3(localBox.min.x, 0, 0);
+          const hingeWorld = doorMain.localToWorld(hingeLocal);
+          doorMain.parent.worldToLocal(hingeWorld);
+          doorGroup.position.copy(hingeWorld);
         } else {
-           const box = new THREE.Box3().setFromObject(doorMain);
-           const hingeWorld = new THREE.Vector3(box.min.x, box.getCenter(new THREE.Vector3()).y, box.getCenter(new THREE.Vector3()).z);
-           doorMain.parent.worldToLocal(hingeWorld);
-           doorGroup.position.copy(hingeWorld);
+          const box = new THREE.Box3().setFromObject(doorMain);
+          const hingeWorld = new THREE.Vector3(box.min.x, box.getCenter(new THREE.Vector3()).y, box.getCenter(new THREE.Vector3()).z);
+          doorMain.parent.worldToLocal(hingeWorld);
+          doorGroup.position.copy(hingeWorld);
         }
-        
+
         const doorParts = [
           "door_main",
           "door_panel_lower",
@@ -497,20 +498,20 @@ window.ThreeScene = {
           "door_knob",
           "lock_door"
         ];
-        
+
         const partsToAttach = [];
         this.model.traverse(child => {
-           doorParts.forEach(partName => {
-              if (child.name.toLowerCase().includes(partName.toLowerCase())) {
-                 partsToAttach.push(child);
-              }
-           });
+          doorParts.forEach(partName => {
+            if (child.name.toLowerCase().includes(partName.toLowerCase())) {
+              partsToAttach.push(child);
+            }
+          });
         });
-        
+
         partsToAttach.forEach(part => {
-           doorGroup.attach(part);
+          doorGroup.attach(part);
         });
-        
+
         this.meshes["door_pivot"] = doorGroup;
       }
 
@@ -518,38 +519,38 @@ window.ThreeScene = {
       let motor = null;
       this.model.traverse(child => {
         if (child.name.toLowerCase().includes("fan_motor_body")) {
-           motor = child;
+          motor = child;
         }
       });
 
       if (motor && motor.parent) {
-         const fanGroup = new THREE.Group();
-         motor.parent.add(fanGroup);
-         
-         const box = new THREE.Box3().setFromObject(motor);
-         const motorCenter = box.getCenter(new THREE.Vector3());
-         motor.parent.worldToLocal(motorCenter);
-         fanGroup.position.copy(motorCenter);
-         
-         const fanParts = ["fan_motor_body", "fan_blade_0", "fan_blade_1", "fan_blade_2", "fan_blade_3"];
-         const partsToAttach = [];
-         this.model.traverse(child => {
-           fanParts.forEach(partName => {
-             if (child.name.toLowerCase().includes(partName.toLowerCase())) {
-                partsToAttach.push(child);
-             }
-           });
-         });
-         
-         partsToAttach.forEach(part => {
-            fanGroup.attach(part);
-         });
-         
-         this.meshes["fan_group"] = fanGroup;
+        const fanGroup = new THREE.Group();
+        motor.parent.add(fanGroup);
+
+        const box = new THREE.Box3().setFromObject(motor);
+        const motorCenter = box.getCenter(new THREE.Vector3());
+        motor.parent.worldToLocal(motorCenter);
+        fanGroup.position.copy(motorCenter);
+
+        const fanParts = ["fan_motor_body", "fan_blade_0", "fan_blade_1", "fan_blade_2", "fan_blade_3"];
+        const partsToAttach = [];
+        this.model.traverse(child => {
+          fanParts.forEach(partName => {
+            if (child.name.toLowerCase().includes(partName.toLowerCase())) {
+              partsToAttach.push(child);
+            }
+          });
+        });
+
+        partsToAttach.forEach(part => {
+          fanGroup.attach(part);
+        });
+
+        this.meshes["fan_group"] = fanGroup;
       }
-      
+
       // Re-apply states now that model is loaded
-      loadDevices(); 
+      loadDevices();
     }, undefined, (error) => {
       console.error("Error loading 3D model:", error);
     });
@@ -573,13 +574,13 @@ window.ThreeScene = {
   animate() {
     requestAnimationFrame(() => this.animate());
     const delta = this.clock.getDelta();
-    
+
     this.controls.update();
-    
+
     // Animate fan if on
     const fanGroup = this.meshes["fan_group"];
     if (fanGroup && fanGroup.userData.isOn) {
-       fanGroup.rotation.y += 10 * delta;
+      fanGroup.rotation.y += 10 * delta;
     } else if (!fanGroup) {
       // Fallback
       if (this.meshes["fan_motor_body"] && this.meshes["fan_motor_body"].userData.isOn) {
@@ -588,7 +589,7 @@ window.ThreeScene = {
       for (let i = 0; i < 4; i++) {
         const blade = this.meshes[`fan_blade_${i}`];
         if (blade && blade.userData.isOn) {
-           blade.rotation.y += 10 * delta;
+          blade.rotation.y += 10 * delta;
         }
       }
     }
@@ -607,19 +608,19 @@ window.ThreeScene = {
 
     if (intersects.length > 0) {
       const clickedMesh = intersects[0].object;
-      
+
       const meshName = clickedMesh.name.toLowerCase();
       if (meshName.includes("lock_door") || meshName.includes("wall_led_indicator")) {
-         toggleDevice("cerradura");
-         return;
+        toggleDevice("cerradura");
+        return;
       } else if (meshName.includes("door_")) {
-         toggleDevice("puerta");
-         return;
+        toggleDevice("puerta");
+        return;
       } else if (meshName.includes("fan_")) {
-         toggleDevice("ventilador");
-         return;
+        toggleDevice("ventilador");
+        return;
       }
-      
+
       // Find which device key maps to this mesh name
       let foundDeviceKey = null;
       for (const [key, mappingName] of Object.entries(this.mapping)) {
@@ -643,29 +644,29 @@ window.ThreeScene = {
       const door = this.meshes["door_pivot"] || this.meshes[meshName];
       if (door) {
         // Rotación de la puerta (-90 grados para abrir hacia adentro)
-        door.rotation.y = isOn ? -Math.PI / 2 : 0; 
+        door.rotation.y = isOn ? -Math.PI / 2 : 0;
       }
     } else if (deviceKey === "cerradura") {
       this.model.traverse(child => {
         if ((child.name.toLowerCase().includes("lock_door") || child.name.toLowerCase().includes("wall_led_indicator")) && child.isMesh) {
-           const mats = Array.isArray(child.material) ? child.material : [child.material];
-           mats.forEach(mat => {
-              if (mat) {
-                 if (isOn) {
-                    mat.emissive.setHex(0xff3333);
-                    mat.emissiveIntensity = 2;
-                 } else {
-                    mat.emissive.setHex(0x33ff33);
-                    mat.emissiveIntensity = 1.5;
-                 }
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach(mat => {
+            if (mat) {
+              if (isOn) {
+                mat.emissive.setHex(0xff3333);
+                mat.emissiveIntensity = 2;
+              } else {
+                mat.emissive.setHex(0x33ff33);
+                mat.emissiveIntensity = 1.5;
               }
-           });
+            }
+          });
         }
       });
     } else if (deviceKey === "ventilador") {
       const fan = this.meshes["fan_group"];
       if (fan) fan.userData.isOn = isOn;
-      
+
       if (this.meshes["fan_motor_body"]) this.meshes["fan_motor_body"].userData.isOn = isOn;
       for (let i = 0; i < 4; i++) {
         if (this.meshes[`fan_blade_${i}`]) this.meshes[`fan_blade_${i}`].userData.isOn = isOn;
@@ -686,7 +687,224 @@ window.ThreeScene = {
   }
 };
 
-// Initialize Three.js scene
+async function toggleAllLights(targetState){
+  const lightKeys = [
+    "luz_habitacion_1",
+    "luz_habitacion_2",
+    "luz_sala",
+    "luz_cocina",
+    "luz_bano",
+    "luz_jardin"
+  ];
+  
+  const promises = lightKeys.map((key) => {
+    return fetch(`/api/devices/${key}/toggle/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: JSON.stringify({ is_on: targetState }),
+    }).then(res => res.json());
+  });
+
+  try {
+    const results = await Promise.all(promises);
+    results.forEach(data => {
+      if (data && data.device) {
+        setHotspotState(data.device);
+      }
+    });
+    await loadDevices();
+    await loadHistory();
+    showToast(targetState ? "Todas las luces encendidas" : "Todas las luces apagadas");
+  } catch (error) {
+    console.error("Error al cambiar todas las luces:", error);
+    showToast("Error de conexion al actualizar luces");
+  }
+}
+
+// --- Voice Control Engine ---
+const VoiceControl = {
+  recognition: null,
+  isListening: false,
+  btn: null,
+  led: null,
+
+  deviceSynonyms: {
+    "luz_habitacion_1": ["habitacion 1", "habitacion uno", "cuarto 1", "cuarto uno", "luz 1", "dormitorio 1", "dormitorio uno"],
+    "luz_habitacion_2": ["habitacion 2", "habitacion dos", "cuarto 2", "cuarto dos", "luz 2", "dormitorio 2", "dormitorio dos"],
+    "luz_sala": ["luz sala", "luz de la sala", "luz salon", "luz del salon", "sala", "salon"],
+    "luz_cocina": ["luz de la cocina", "luz cocina", "cocina"],
+    "luz_bano": ["luz del bano", "luz del baño", "luz bano", "luz baño", "bano", "baño", "sanitario"],
+    "luz_jardin": ["luz del jardin", "luz jardin", "jardin", "patio", "exterior", "luz exterior"],
+    "puerta": ["puerta principal", "puerta de entrada", "puerta", "porton", "entrada"],
+    "cerradura": ["cerradura", "seguro", "cerrojo", "candado", "llave"],
+    "sensor_pir": ["sensor de movimiento", "sensor pir", "sensor"],
+    "ventilador": ["ventilador de la sala", "ventilador sala", "ventilador", "aire", "abanico"]
+  },
+
+  onKeywords: ["encender", "prender", "conectar", "activar", "abrir", "enciende", "prende", "conecta", "activa", "abre", "on"],
+  offKeywords: ["apagar", "desconectar", "desactivar", "cerrar", "apaga", "desconecta", "desactiva", "cierra", "off"],
+
+  normalizeText(text) {
+    if (!text) return "";
+    return text.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .trim();
+  },
+
+  init() {
+    this.btn = document.getElementById("voiceBtn");
+    this.led = document.getElementById("remoteLed");
+    if (!this.btn) return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("SpeechRecognition not supported in this browser.");
+      this.btn.addEventListener("click", () => {
+        SoundEngine.error();
+        showToast("Tu navegador no soporta control por voz (usa Chrome o Edge)");
+      });
+      return;
+    }
+
+    this.recognition = new SpeechRecognition();
+    this.recognition.lang = 'es-ES';
+    this.recognition.interimResults = false;
+    this.recognition.maxAlternatives = 1;
+
+    this.recognition.onstart = () => {
+      this.isListening = true;
+      this.btn.classList.add("is-listening");
+      if (this.led) this.led.classList.add("is-listening");
+      // Play a starting tone (Siri/Alexa-like high beep)
+      SoundEngine.playTone(880, 'sine', 0.1, 0.05);
+      setTimeout(() => SoundEngine.playTone(987, 'sine', 0.1, 0.05), 80);
+    };
+
+    this.recognition.onend = () => {
+      this.isListening = false;
+      this.btn.classList.remove("is-listening");
+      if (this.led) this.led.classList.remove("is-listening");
+    };
+
+    this.recognition.onerror = (event) => {
+      console.error("Speech Recognition Error:", event.error);
+      this.isListening = false;
+      this.btn.classList.remove("is-listening");
+      if (this.led) this.led.classList.remove("is-listening");
+      SoundEngine.error();
+      if (event.error === 'not-allowed') {
+        showToast("Permiso de micrófono denegado");
+      } else if (event.error === 'network') {
+        showToast("Error de red. Brave bloquea esta función por privacidad. Usa Chrome/Edge o verifica http://localhost:8000");
+      } else {
+        showToast(`Error al escuchar: ${event.error}`);
+      }
+    };
+
+    this.recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      this.processCommand(transcript);
+    };
+
+    this.btn.addEventListener("click", () => {
+      if (this.isListening) {
+        this.recognition.stop();
+      } else {
+        this.recognition.start();
+      }
+    });
+  },
+
+  processCommand(rawSpeech) {
+    const speech = this.normalizeText(rawSpeech);
+    console.log(`Voz reconocida: "${rawSpeech}" (Normalizada: "${speech}")`);
+
+    // 1. Determine the target state (ON, OFF, or toggle/null)
+    let targetState = null;
+    const hasOn = this.onKeywords.some(keyword => speech.includes(keyword));
+    const hasOff = this.offKeywords.some(keyword => speech.includes(keyword));
+
+    if (hasOn && !hasOff) {
+      targetState = true;
+    } else if (hasOff && !hasOn) {
+      targetState = false;
+    }
+
+    // 2. Identify target device
+    let matchedDeviceKey = null;
+    let longestMatchLength = 0;
+
+    for (const [deviceKey, synonyms] of Object.entries(this.deviceSynonyms)) {
+      for (const synonym of synonyms) {
+        const normalizedSynonym = this.normalizeText(synonym);
+        if (speech.includes(normalizedSynonym)) {
+          if (normalizedSynonym.length > longestMatchLength) {
+            matchedDeviceKey = deviceKey;
+            longestMatchLength = normalizedSynonym.length;
+          }
+        }
+      }
+    }
+
+    // Check if the command refers to "all lights" or "everything"
+    const isAllLights = speech.includes("todas las luces") || 
+                        speech.includes("todas las habitaciones") ||
+                        speech.includes("todo") ||
+                        (speech.includes("luces") && matchedDeviceKey === null) ||
+                        (speech.includes("luz") && matchedDeviceKey === null) ||
+                        (speech.includes("todas") && matchedDeviceKey === null);
+
+    if (isAllLights) {
+      if (targetState !== null) {
+        showToast(`Procesando: "${rawSpeech}" (Todas las luces)`);
+        toggleAllLights(targetState).then(() => {
+          SoundEngine.success();
+        }).catch(err => {
+          console.error(err);
+          SoundEngine.error();
+        });
+      } else {
+        // Alternar todas las luces
+        const lightButtons = document.querySelectorAll('.remote-btn[data-kind="light"]');
+        let anyLightOn = false;
+        lightButtons.forEach(btn => {
+          if (btn.classList.contains('is-on')) anyLightOn = true;
+        });
+        const nextState = !anyLightOn;
+        showToast(`Alternando todas las luces -> ${nextState ? "Encender" : "Apagar"}`);
+        toggleAllLights(nextState).then(() => {
+          SoundEngine.success();
+        }).catch(err => {
+          console.error(err);
+          SoundEngine.error();
+        });
+      }
+      return;
+    }
+
+    if (matchedDeviceKey) {
+      const stateText = targetState === true ? "encender" : (targetState === false ? "apagar" : "cambiar");
+      showToast(`Procesando: "${rawSpeech}"`);
+
+      toggleDevice(matchedDeviceKey, targetState).then(() => {
+        SoundEngine.success();
+      }).catch(err => {
+        console.error(err);
+        SoundEngine.error();
+      });
+    } else {
+      SoundEngine.error();
+      showToast(`No se entendió el comando: "${rawSpeech}"`);
+    }
+  }
+};
+
+// Initialize Three.js scene and Voice Control
 window.addEventListener('DOMContentLoaded', () => {
   window.ThreeScene.init();
+  VoiceControl.init();
 });

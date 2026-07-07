@@ -51,32 +51,37 @@ body.is-day .model-stage {
 
 button { border: 0; font: inherit; }
 
-.shell { width: min(1420px, calc(100% - 32px)); margin: 0 auto; padding: 20px 0 28px; }
+.shell { width: min(1420px, calc(100% - 32px)); margin: 0 auto; padding: 16px 0 28px; }
+
+/* ==========================================
+   TOPBAR
+   ========================================== */
 
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; margin-bottom: 24px;
+  gap: 12px; margin-bottom: 16px;
 }
 .eyebrow {
-  margin: 0 0 4px; color: var(--teal); font-size: .85rem; font-weight: 800;
+  margin: 0 0 4px; color: var(--teal); font-size: .75rem; font-weight: 800;
   letter-spacing: 1px; text-transform: uppercase;
   text-shadow: 0 0 10px rgba(47,129,247,0.4);
 }
 h1, h2 { margin: 0; letter-spacing: -0.5px; }
 h1 {
-  font-size: clamp(1.7rem, 2.4vw, 2.8rem); line-height: 1.1; font-weight: 800;
+  font-size: clamp(1.3rem, 2vw, 2.2rem); line-height: 1.1; font-weight: 800;
   background: linear-gradient(to right, var(--h1-grad-1), var(--h1-grad-2));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
 .connection {
-  display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px;
   border: var(--glass-border); border-radius: 12px;
   background: var(--panel); backdrop-filter: blur(12px);
-  color: #3fb950; font-weight: 600; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  color: #3fb950; font-weight: 600; font-size: 0.8rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 .connection-dot {
-  width: 10px; height: 10px; border-radius: 999px;
+  width: 8px; height: 8px; border-radius: 999px;
   background: #2ea043; box-shadow: 0 0 0 4px rgba(46,160,67,0.2);
   animation: pulse 2s infinite;
 }
@@ -88,25 +93,36 @@ h1 {
 .connection.is-disconnected { color: #f85149; background: rgba(248,81,73,0.1); border-color: rgba(248,81,73,0.2); }
 .connection-dot.is-disconnected { background: #f85149; box-shadow: none; animation: none; }
 
+/* ==========================================
+   WORKSPACE LAYOUT
+   ========================================== */
+
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0,1fr) 320px;
-  grid-template-rows: auto auto;
-  gap: 20px;
+  grid-template-columns: minmax(0,1fr) 260px;
+  grid-template-rows: 1fr auto;
+  gap: 16px;
   align-items: start;
+  min-height: 0;
 }
 .model-card { grid-row: 1; grid-column: 1; }
 .events-card { grid-row: 2; grid-column: 1; }
 .remote { grid-row: 1 / 3; grid-column: 2; align-self: start; }
 
+/* ==========================================
+   3D MODEL CARD
+   ========================================== */
+
 .model-card {
-  border: var(--glass-border); border-radius: 16px;
+  border: var(--glass-border); border-radius: 14px;
   background: var(--panel); backdrop-filter: blur(16px);
   box-shadow: var(--shadow); overflow: hidden;
 }
 .model-stage {
-  min-height: 710px; padding: clamp(14px,2vw,28px);
-  display: grid; place-items: center; background: transparent; overflow: hidden;
+  height: clamp(340px, calc(100vh - 260px), 600px);
+  padding: clamp(8px, 1.5vw, 16px);
+  display: grid; place-items: center;
+  background: transparent; overflow: hidden;
 }
 #three-canvas {
   width: 100%; height: 100%; display: block;
@@ -118,42 +134,42 @@ h1 {
    ========================================== */
 
 .events-card {
-  border: var(--glass-border); border-radius: 16px;
+  border: var(--glass-border); border-radius: 14px;
   background: var(--panel); backdrop-filter: blur(16px);
-  box-shadow: var(--shadow); padding: 16px 20px;
+  box-shadow: var(--shadow); padding: 12px 16px;
 }
 .events-header {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 14px; padding-bottom: 12px;
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px; padding-bottom: 10px;
   border-bottom: var(--glass-border);
 }
 .events-header svg { color: var(--teal); flex-shrink: 0; }
-.events-header h2 { font-size: 0.95rem; font-weight: 600; }
+.events-header h2 { font-size: 0.85rem; font-weight: 600; }
 .events-list {
-  display: grid; gap: 8px;
-  max-height: 200px; overflow-y: auto;
+  display: grid; gap: 6px;
+  max-height: 160px; overflow-y: auto;
 }
 .events-list::-webkit-scrollbar { width: 3px; }
 .events-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
 
 .history-item {
   display: grid; grid-template-columns: auto minmax(0,1fr);
-  gap: 10px; align-items: center;
-  padding: 8px 12px; border-radius: 10px;
+  gap: 8px; align-items: center;
+  padding: 6px 10px; border-radius: 8px;
   background: var(--card-bg);
   border: 1px solid transparent;
   transition: background .2s;
 }
 .history-item:hover { background: var(--btn-bg-hover); }
-.event-time { color: var(--teal); font-size: .72rem; font-weight: 800; white-space: nowrap; }
+.event-time { color: var(--teal); font-size: .68rem; font-weight: 800; white-space: nowrap; }
 .event-message {
   overflow-wrap: anywhere; display: flex; align-items: center;
-  gap: 6px; color: var(--muted); font-size: .78rem; margin: 0;
+  gap: 6px; color: var(--muted); font-size: .72rem; margin: 0;
 }
 
 .badge {
-  padding: 2px 7px; border-radius: 10px;
-  font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
+  padding: 2px 6px; border-radius: 10px;
+  font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
 }
 .badge-on { background: rgba(46,160,67,0.2); color: #3fb950; border: 1px solid rgba(46,160,67,0.4); }
 .badge-off { background: rgba(248,81,73,0.2); color: #ff7b72; border: 1px solid rgba(248,81,73,0.4); }
@@ -166,13 +182,13 @@ h1 {
 .remote {
   background: linear-gradient(170deg, #1e2330 0%, #141820 40%, #0e1117 100%);
   border: 2px solid rgba(255,255,255,0.06);
-  border-radius: 40px 40px 48px 48px;
+  border-radius: 32px 32px 38px 38px;
   padding: 0;
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 100px);
   overflow-y: auto;
   overflow-x: hidden;
   box-shadow:
-    0 30px 80px rgba(0,0,0,0.7),
+    0 24px 60px rgba(0,0,0,0.7),
     0 0 0 1px rgba(255,255,255,0.04),
     inset 0 1px 0 rgba(255,255,255,0.08),
     inset 0 -2px 0 rgba(0,0,0,0.3);
@@ -184,10 +200,10 @@ h1 {
 
 /* IR Window at top */
 .remote-ir {
-  display: flex; justify-content: center; padding: 20px 0 10px;
+  display: flex; justify-content: center; padding: 14px 0 6px;
 }
 .remote-ir-window {
-  width: 40px; height: 10px; border-radius: 5px;
+  width: 36px; height: 8px; border-radius: 4px;
   background: linear-gradient(90deg, #1a1520, #2a1828, #1a1520);
   border: 1px solid rgba(80,40,60,0.3);
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
@@ -196,10 +212,10 @@ h1 {
 /* Power/Refresh button + LED */
 .remote-top-row {
   display: flex; align-items: center; justify-content: center;
-  gap: 16px; padding: 8px 24px 16px;
+  gap: 12px; padding: 6px 20px 10px;
 }
 .remote-power-btn {
-  width: 42px; height: 42px; border-radius: 50%;
+  width: 36px; height: 36px; border-radius: 50%;
   background: linear-gradient(145deg, #2a2f3e, #1a1e2a);
   border: 2px solid rgba(255,255,255,0.06);
   color: #f85149; cursor: pointer;
@@ -215,39 +231,99 @@ h1 {
 .remote-power-btn:active { transform: scale(0.95); }
 
 .remote-status-led {
-  width: 8px; height: 8px; border-radius: 50%;
+  width: 7px; height: 7px; border-radius: 50%;
   background: #3fb950;
   box-shadow: 0 0 6px #3fb950, 0 0 12px rgba(63,185,80,0.3);
   animation: ledPulse 3s ease-in-out infinite;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+.remote-status-led.is-listening {
+  background: #2f81f7;
+  box-shadow: 0 0 8px #2f81f7, 0 0 16px rgba(47,129,247,0.6);
+  animation: ledListeningPulse 0.8s ease-in-out infinite;
 }
 @keyframes ledPulse {
   0%,100% { opacity: 1; }
   50% { opacity: 0.3; }
+}
+@keyframes ledListeningPulse {
+  0%, 100% { opacity: 1; transform: scale(1.2); }
+  50% { opacity: 0.4; transform: scale(0.9); }
+}
+
+.remote-voice-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(145deg, #2a2f3e, #1a1e2a);
+  border: 2px solid rgba(255,255,255,0.06);
+  color: #7d8590; cursor: pointer;
+  display: grid; place-items: center;
+  transition: all .2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.remote-voice-btn:hover {
+  background: linear-gradient(145deg, #343a4d, #222838);
+  transform: scale(1.08);
+  color: var(--teal);
+  box-shadow: 0 4px 16px rgba(47,129,247,0.2);
+}
+.remote-voice-btn:active { transform: scale(0.95); }
+
+/* Glowing active state when listening */
+.remote-voice-btn.is-listening {
+  color: #ffffff;
+  background: linear-gradient(145deg, #2f81f7, #1f51af);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 0 18px rgba(47,129,247,0.7), 0 4px 12px rgba(0,0,0,0.3);
+  animation: voicePulse 1.2s ease-in-out infinite;
+}
+
+@keyframes voicePulse {
+  0%, 100% { transform: scale(1.08); box-shadow: 0 0 18px rgba(47,129,247,0.7), 0 4px 12px rgba(0,0,0,0.3); }
+  50% { transform: scale(1.15); box-shadow: 0 0 28px rgba(47,129,247,0.9), 0 4px 16px rgba(0,0,0,0.4); }
+}
+
+/* Day mode support */
+body.is-day .remote-voice-btn {
+  background: linear-gradient(145deg, #e8ecf2, #d8dde6);
+  border-color: rgba(0,0,0,0.08);
+  color: #57606a;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+body.is-day .remote-voice-btn:hover {
+  background: linear-gradient(145deg, #f0f3f8, #e0e5ee);
+  color: var(--teal);
+  box-shadow: 0 4px 12px rgba(47,129,247,0.2);
+}
+body.is-day .remote-voice-btn.is-listening {
+  color: #ffffff;
+  background: linear-gradient(145deg, #2f81f7, #1f51af);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 0 18px rgba(47,129,247,0.6);
 }
 
 /* === DEVICE BUTTONS GRID === */
 .remote-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px 6px;
-  padding: 12px 20px;
+  gap: 4px 4px;
+  padding: 8px 14px;
 }
 
 /* Section label spanning full width */
 .remote-section-label {
   grid-column: 1 / -1;
-  font-size: 0.6rem; font-weight: 700;
+  font-size: 0.55rem; font-weight: 700;
   letter-spacing: 2.5px; text-transform: uppercase;
   color: rgba(255,255,255,0.2);
   text-align: center;
-  padding: 8px 0 2px;
+  padding: 6px 0 2px;
 }
 .remote-section-label:first-child { padding-top: 0; }
 
 /* Each button: icon on top, name below */
 .remote-btn {
   display: flex; flex-direction: column; align-items: center;
-  gap: 6px; padding: 10px 4px 8px;
+  gap: 4px; padding: 6px 2px 5px;
   background: none; border: none; cursor: pointer;
   color: var(--muted);
   transition: all .2s ease;
@@ -264,7 +340,7 @@ h1 {
 
 /* The circular icon button */
 .remote-btn-icon {
-  width: 52px; height: 52px; border-radius: 14px;
+  width: 42px; height: 42px; border-radius: 12px;
   background: linear-gradient(145deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02));
   border: 1px solid rgba(255,255,255,0.06);
   display: grid; place-items: center;
@@ -272,18 +348,18 @@ h1 {
   box-shadow: 0 3px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 .remote-btn-icon svg {
-  width: 22px; height: 22px;
+  width: 18px; height: 18px;
   stroke: currentColor; fill: none;
   transition: all .25s ease;
 }
 
 /* Button label */
 .remote-btn-label {
-  font-size: 0.62rem; font-weight: 600;
+  font-size: 0.55rem; font-weight: 600;
   letter-spacing: 0.3px;
   text-align: center;
   line-height: 1.2;
-  max-width: 72px;
+  max-width: 64px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   color: rgba(255,255,255,0.35);
   transition: color .25s ease;
@@ -344,66 +420,42 @@ h1 {
 
 /* === DIVIDER === */
 .remote-divider {
-  height: 2px; margin: 8px 28px;
+  height: 2px; margin: 6px 24px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
   border-radius: 1px;
 }
 
 /* === HISTORY === */
 .remote-section-title {
-  font-size: 0.6rem; font-weight: 700;
+  font-size: 0.55rem; font-weight: 700;
   letter-spacing: 2.5px; text-transform: uppercase;
   color: rgba(255,255,255,0.2);
-  text-align: center; padding: 4px 0 8px;
+  text-align: center; padding: 4px 0 6px;
 }
 .remote-history {
   display: grid; gap: 4px;
-  padding: 0 16px 8px; max-height: 180px; overflow-y: auto;
+  padding: 0 14px 8px; max-height: 160px; overflow-y: auto;
 }
 .remote-history::-webkit-scrollbar { width: 2px; }
 .remote-history::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); }
 
-.history-item {
-  display: grid; grid-template-columns: auto minmax(0,1fr);
-  gap: 8px; align-items: center;
-  padding: 6px 8px; border-radius: 8px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid transparent;
-  transition: background .2s;
-}
-.history-item:hover { background: rgba(255,255,255,0.04); }
-.event-time { color: var(--teal); font-size: .65rem; font-weight: 800; white-space: nowrap; }
-.event-message {
-  overflow-wrap: anywhere; display: flex; align-items: center;
-  gap: 6px; color: var(--muted); font-size: .68rem; margin: 0;
-}
-
-/* Badges */
-.badge {
-  padding: 1px 6px; border-radius: 10px;
-  font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
-}
-.badge-on { background: rgba(46,160,67,0.2); color: #3fb950; border: 1px solid rgba(46,160,67,0.4); }
-.badge-off { background: rgba(248,81,73,0.2); color: #ff7b72; border: 1px solid rgba(248,81,73,0.4); }
-.badge-info { background: rgba(47,129,247,0.2); color: #58a6ff; border: 1px solid rgba(47,129,247,0.4); }
-
 /* === BRAND FOOTER === */
 .remote-brand {
   display: flex; align-items: center; justify-content: center;
-  gap: 8px; padding: 14px 20px 22px;
+  gap: 6px; padding: 10px 16px 16px;
 }
 .remote-brand svg {
-  width: 14px; height: 14px; stroke: rgba(255,255,255,0.15); fill: none;
+  width: 12px; height: 12px; stroke: rgba(255,255,255,0.15); fill: none;
 }
 .remote-brand span {
-  font-size: 0.6rem; font-weight: 700; letter-spacing: 4px;
+  font-size: 0.55rem; font-weight: 700; letter-spacing: 4px;
   color: rgba(255,255,255,0.12);
 }
 
 /* === ICON BUTTON (topbar theme toggle) === */
 .icon-button {
   display: grid; place-items: center;
-  width: 36px; height: 36px;
+  width: 34px; height: 34px;
   border: var(--glass-border); border-radius: 10px;
   background: var(--btn-bg); color: var(--teal);
   cursor: pointer; transition: background .2s ease, color .2s ease;
@@ -418,7 +470,7 @@ h1 {
 .remote-btn.is-loading .remote-btn-icon svg { visibility: hidden; }
 .remote-btn.is-loading .remote-btn-icon::after {
   content: ""; position: absolute; inset: 0; margin: auto;
-  width: 18px; height: 18px;
+  width: 16px; height: 16px;
   border: 2px solid rgba(255,255,255,0.15);
   border-top-color: var(--teal); border-radius: 50%;
   animation: spin-loader 0.7s linear infinite;
@@ -427,19 +479,22 @@ h1 {
 
 /* === TOAST === */
 .toast {
-  position: fixed; right: 20px; bottom: 20px;
-  max-width: min(380px, calc(100% - 40px));
-  padding: 14px 20px; border: var(--glass-border); border-radius: 14px;
+  position: fixed; right: 16px; bottom: 16px;
+  max-width: min(340px, calc(100% - 32px));
+  padding: 12px 16px; border: var(--glass-border); border-radius: 12px;
   background: var(--panel); backdrop-filter: blur(12px);
   color: var(--ink); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  font-weight: 700; display: flex; align-items: center; gap: 12px;
+  font-weight: 700; font-size: 0.82rem;
+  display: flex; align-items: center; gap: 10px;
   opacity: 0; pointer-events: none;
   transform: translateY(20px) scale(0.95);
   transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+  z-index: 100;
 }
 .toast::before {
-  content: ""; display: block; width: 8px; height: 8px; border-radius: 50%;
+  content: ""; display: block; width: 7px; height: 7px; border-radius: 50%;
   background: var(--teal); box-shadow: 0 0 10px var(--teal);
+  flex-shrink: 0;
 }
 .toast.is-visible { opacity: 1; transform: translateY(0) scale(1); }
 
@@ -487,18 +542,187 @@ body.is-day .remote-divider {
 }
 body.is-day .history-item { background: rgba(0,0,0,0.02); }
 
-/* === RESPONSIVE === */
-@media (max-width: 1120px) {
-  .workspace { grid-template-columns: 1fr; }
-  .model-card, .events-card, .remote { grid-column: 1; grid-row: auto; }
-  .remote { max-height: 400px; border-radius: 32px; }
-  .remote-grid { grid-template-columns: repeat(5, 1fr); }
+/* Group buttons styling */
+.remote-btn-icon.group-on-icon {
+  background: rgba(251,191,36,0.08);
+  color: #fbbf24;
+  border-color: rgba(251,191,36,0.2);
 }
-@media (max-width: 760px) {
-  .shell { width: min(100% - 16px, 1420px); padding-top: 12px; }
-  .topbar { align-items: flex-start; flex-direction: column; }
-  .model-stage { min-height: auto; padding: 10px; justify-content: start; overflow-x: auto; }
+.remote-btn:hover .remote-btn-icon.group-on-icon {
+  background: rgba(251,191,36,0.18);
+  border-color: rgba(251,191,36,0.4);
+  box-shadow: 0 0 16px rgba(251,191,36,0.25), 0 4px 12px rgba(0,0,0,0.3);
 }
+.remote-btn-icon.group-off-icon {
+  background: rgba(248,113,113,0.08);
+  color: #f87171;
+  border-color: rgba(248,113,113,0.2);
+}
+.remote-btn:hover .remote-btn-icon.group-off-icon {
+  background: rgba(248,113,113,0.18);
+  border-color: rgba(248,113,113,0.4);
+  box-shadow: 0 0 16px rgba(248,113,113,0.25), 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Day mode overrides for groups */
+body.is-day .remote-btn-icon.group-on-icon {
+  background: rgba(245,158,11,0.08);
+  color: #d97706;
+  border-color: rgba(245,158,11,0.2);
+}
+body.is-day .remote-btn:hover .remote-btn-icon.group-on-icon {
+  background: rgba(245,158,11,0.15);
+  border-color: rgba(245,158,11,0.4);
+}
+body.is-day .remote-btn-icon.group-off-icon {
+  background: rgba(220,38,38,0.08);
+  color: #dc2626;
+  border-color: rgba(220,38,38,0.2);
+}
+body.is-day .remote-btn:hover .remote-btn-icon.group-off-icon {
+  background: rgba(220,38,38,0.15);
+  border-color: rgba(220,38,38,0.4);
+}
+
+/* ==========================================
+   RESPONSIVE BREAKPOINTS
+   ========================================== */
+
+/* Large desktops (> 1280px) — default layout applies */
+
+/* Medium desktops / small laptops (960px – 1280px) */
+@media (max-width: 1280px) {
+  .workspace {
+    grid-template-columns: minmax(0,1fr) 240px;
+    gap: 12px;
+  }
+  .remote-grid { gap: 3px 3px; padding: 6px 12px; }
+  .remote-btn-icon { width: 38px; height: 38px; border-radius: 10px; }
+  .remote-btn-icon svg { width: 16px; height: 16px; }
+  .remote-btn-label { font-size: 0.5rem; max-width: 58px; }
+  .remote-btn { gap: 3px; padding: 5px 2px 4px; }
+}
+
+/* Tablets / narrow windows (max-width: 960px) — stack layout */
+@media (max-width: 960px) {
+  .shell { width: min(100% - 24px, 1420px); padding: 12px 0 20px; }
+
+  .workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+  .model-card { grid-row: 1; grid-column: 1; }
+  .remote { grid-row: 2; grid-column: 1; }
+  .events-card { grid-row: 3; grid-column: 1; }
+
+  .model-stage {
+    height: clamp(280px, 50vw, 420px);
+  }
+
+  /* Remote becomes horizontal bar */
+  .remote {
+    max-height: none;
+    border-radius: 24px;
+    overflow: visible;
+  }
+  .remote-ir { padding: 10px 0 4px; }
+  .remote-ir-window { width: 30px; height: 6px; }
+  .remote-top-row { padding: 4px 16px 8px; }
+
+  .remote-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px 4px;
+    padding: 6px 12px;
+  }
+  .remote-btn-icon { width: 44px; height: 44px; border-radius: 12px; }
+  .remote-btn-icon svg { width: 18px; height: 18px; }
+  .remote-btn-label { font-size: 0.55rem; max-width: 68px; }
+  .remote-btn { gap: 4px; padding: 6px 2px 5px; }
+
+  .remote-brand { padding: 8px 16px 14px; }
+}
+
+/* Small tablets / large phones (max-width: 680px) */
+@media (max-width: 680px) {
+  .shell { width: min(100% - 16px, 1420px); padding: 10px 0 16px; }
+
+  .topbar {
+    flex-direction: column; align-items: flex-start; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .eyebrow { font-size: 0.65rem; }
+  h1 { font-size: 1.2rem; }
+
+  .model-stage {
+    height: clamp(220px, 45vw, 340px);
+    padding: 6px;
+  }
+
+  .remote-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px 3px;
+    padding: 6px 10px;
+  }
+  .remote-btn-icon { width: 40px; height: 40px; }
+  .remote-btn-icon svg { width: 16px; height: 16px; }
+  .remote-btn-label { font-size: 0.5rem; max-width: 56px; }
+  .remote-btn { gap: 3px; padding: 5px 2px 4px; }
+
+  .events-card { padding: 10px 12px; }
+  .events-header h2 { font-size: 0.78rem; }
+  .events-list { max-height: 120px; }
+}
+
+/* Phones (max-width: 480px) */
 @media (max-width: 480px) {
-  .remote-grid { grid-template-columns: repeat(3, 1fr); }
+  .shell { padding: 8px 0 12px; }
+
+  .model-stage {
+    height: clamp(200px, 55vw, 300px);
+    padding: 4px;
+  }
+
+  .remote-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px 2px;
+    padding: 4px 8px;
+  }
+  .remote-btn-icon { width: 36px; height: 36px; border-radius: 10px; }
+  .remote-btn-icon svg { width: 15px; height: 15px; }
+  .remote-btn-label { font-size: 0.48rem; max-width: 50px; }
+  .remote-btn { gap: 2px; padding: 4px 2px 3px; }
+
+  .remote { border-radius: 20px; }
+  .remote-ir { padding: 8px 0 3px; }
+  .remote-top-row { padding: 3px 12px 6px; gap: 10px; }
+  .remote-voice-btn { width: 30px; height: 30px; }
+  .remote-voice-btn svg { width: 14px; height: 14px; }
+
+  .connection { padding: 6px 10px; font-size: 0.72rem; gap: 6px; }
+  .connection-dot { width: 7px; height: 7px; }
+
+  .toast {
+    right: 8px; bottom: 8px;
+    max-width: calc(100% - 16px);
+    padding: 10px 14px; font-size: 0.75rem;
+    border-radius: 10px;
+  }
+
+  .events-list { max-height: 100px; gap: 4px; }
+  .history-item { padding: 5px 8px; }
+  .event-time { font-size: 0.6rem; }
+  .event-message { font-size: 0.65rem; }
+}
+
+/* Very small phones (max-width: 360px) */
+@media (max-width: 360px) {
+  .model-stage { height: 180px; }
+
+  .remote-grid { grid-template-columns: repeat(3, 1fr); padding: 3px 6px; }
+  .remote-btn-icon { width: 32px; height: 32px; border-radius: 8px; }
+  .remote-btn-icon svg { width: 14px; height: 14px; }
+  .remote-btn-label { font-size: 0.45rem; }
+
+  h1 { font-size: 1rem; }
+  .eyebrow { font-size: 0.6rem; }
 }
