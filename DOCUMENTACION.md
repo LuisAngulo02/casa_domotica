@@ -51,6 +51,29 @@ La aplicacion permite controlar una maqueta de casa domotica desde una pagina we
 | Puerta principal | Servo | `DOOR_OPEN`, `DOOR_CLOSE` |
 | Cerradura | Rele/solenoide | `LOCK_ON`, `LOCK_OFF` |
 
+## Integración de Sensores Físicos (Hardware de la Maqueta)
+
+La maqueta física de la vivienda cuenta con **3 sensores clave** encargados de automatizar diferentes subsistemas de la casa. Estos sensores envían información al sistema que desencadena las siguientes acciones:
+
+1. **Sensor de Movimiento (PIR):**
+   - **Hardware en Maqueta:** Sensor PIR conectado a un pin digital de entrada del Arduino.
+   - **Lógica de Automatización:** Al detectar presencia física en las proximidades de la puerta de entrada:
+     - Enciende automáticamente la **Luz Exterior (Jardín)**.
+     - Envía una alerta visual en tiempo real a la interfaz del usuario (`Alerta: Presencia en la entrada`).
+     - Al cesar el movimiento, la alerta se retira de la pantalla y la luz exterior se apaga de forma autónoma.
+
+2. **Fotoresistencia (LDR):**
+   - **Hardware en Maqueta:** Sensor LDR (Light Dependent Resistor) conectado a una entrada analógica del Arduino.
+   - **Lógica de Automatización:** Determina los niveles de luminosidad ambiental para definir si es de día o de noche:
+     - **Modo Nocturno:** Conmuta automáticamente el tema de la aplicación web y la escena 3D a **Modo Oscuro** (iluminación de luna fría) y enciende de manera coordinada **todas las luces interiores** de la casa.
+     - **Modo Diurno:** Conmuta la interfaz y el visualizador 3D a **Modo Claro** (sol brillante) y apaga de forma automatizada todas las luces de las habitaciones para simular eficiencia energética.
+
+3. **Sensor de Temperatura (TMP36):**
+   - **Hardware en Maqueta:** Sensor de temperatura analógico TMP36 conectado a una entrada analógica del Arduino.
+   - **Lógica de Automatización:** Monitorea la temperatura ambiente interna:
+     - Si la lectura de temperatura es **igual o superior a 26°C**, se activa de forma automática el **Ventilador** (representado físicamente por un motor de corriente continua - **DC Motor** - accionado mediante un transistor o relé).
+     - Si la temperatura desciende por debajo del umbral de los 26°C, el motor DC se apaga para ahorrar energía.
+
 ## Buenas practicas aplicadas
 
 - Separacion de responsabilidades: las vistas no contienen toda la logica.

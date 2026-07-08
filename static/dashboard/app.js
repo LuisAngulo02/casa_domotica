@@ -1,53 +1,62 @@
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { getCookie, showToast, SoundEngine } from './js/utils.js';
+import { initModal, initSensorModal, initVoiceHelpModal } from './js/modal.js';
+import { ThreeScene } from './js/three_scene.js';
+import { VoiceControl } from './js/voice.js';
+
+// Expose ThreeScene globally to keep compatibility with setHotspotState updates
+window.ThreeScene = ThreeScene;
 
 const deviceList = document.querySelector("#deviceList");
 const historyList = document.querySelector("#history");
-const toast = document.querySelector("#toast");
 const refreshButton = document.querySelector("#refresh");
 const themeToggleBtn = document.querySelector("#themeToggle");
 
-// --- Sound Engine ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// --- Small utilities ---
 
-const SoundEngine = {
-  playTone(freq, type, duration, vol) {
-    if (audioCtx.state === "suspended") audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+// Escapa HTML para evitar inyección cuando insertamos texto dinámico con innerHTML
+function escapeHtml(value) {
+  if (value === null || value === undefined) return "";
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + duration);
-  },
-
-  click() {
-    this.playTone(600, 'sine', 0.1, 0.1);
-    setTimeout(() => this.playTone(800, 'sine', 0.1, 0.05), 50);
-  },
-
-  success() {
-    this.playTone(440, 'sine', 0.1, 0.1);
-    setTimeout(() => this.playTone(554, 'sine', 0.1, 0.1), 100);
-    setTimeout(() => this.playTone(659, 'sine', 0.3, 0.1), 200);
-  },
-
-  error() {
-    this.playTone(200, 'sawtooth', 0.2, 0.1);
-    setTimeout(() => this.playTone(150, 'sawtooth', 0.3, 0.1), 150);
+// Fetch con timeout para no dejar peticiones colgadas si el backend/Arduino no responde
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
   }
-};
-// --------------------
+}
 
+// Envuelve fetch + parseo de JSON validando response.ok, para no repetir el patrón en cada función
+async function fetchJson(url, options = {}, timeoutMs = 8000) {
+  const response = await fetchWithTimeout(url, options, timeoutMs);
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (parseError) {
+    // El servidor pudo haber devuelto HTML de error en vez de JSON
+    data = null;
+  }
+  if (!response.ok) {
+    const message = (data && (data.message || data.error)) || `Error ${response.status}`;
+    const error = new Error(message);
+    error.status = response.status;
+    error.data = data;
+    throw error;
+  }
+  return data;
+}
+
+// --- Theme Management ---
 const storedTheme = localStorage.getItem("theme");
 if (storedTheme === "day") {
   document.body.classList.add("is-day");
@@ -57,17 +66,18 @@ themeToggleBtn?.addEventListener("click", () => {
   document.body.classList.toggle("is-day");
   const isDay = document.body.classList.contains("is-day");
   localStorage.setItem("theme", isDay ? "day" : "night");
+
+  // Desactivar auto-theme por preferencia manual del usuario
+  localStorage.setItem("autoTheme", "false");
+  const autoToggle = document.getElementById("auto-theme-toggle");
+  if (autoToggle) autoToggle.checked = false;
+
+  if (window.ThreeScene && typeof window.ThreeScene.updateTheme === "function") {
+    window.ThreeScene.updateTheme(isDay);
+  }
 });
 
-const kindLabels = {
-  light: "Luz",
-  door: "Puerta",
-  lock: "Cerradura",
-  sensor: "Sensor",
-  fan: "Ventilador",
-};
-
-// SVG icons for each device kind
+// --- Constants & Config ---
 const kindIcons = {
   light: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>`,
   door: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"/><path d="M2 20h20"/><path d="M14 12v.01"/></svg>`,
@@ -76,51 +86,76 @@ const kindIcons = {
   fan: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/></svg>`,
 };
 
-// Grouping configuration for remote sections
 const sectionConfig = [
   { id: "lights", label: "Luces", kinds: ["light"] },
   { id: "access", label: "Accesos", kinds: ["door", "lock"] },
-  { id: "other", label: "Otros", kinds: ["sensor", "fan"] },
+  { id: "other", label: "Otros", kinds: ["fan"] },
 ];
 
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(";").shift();
-  return "";
-}
+// Dispositivos que actualmente tienen una petición de toggle en curso.
+// Evita que doble-clic o clics repetidos disparen múltiples requests simultáneos.
+const pendingToggles = new Set();
 
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.add("is-visible");
-  window.clearTimeout(showToast.timer);
-  showToast.timer = window.setTimeout(() => {
-    toast.classList.remove("is-visible");
-  }, 3000);
-}
-
+// --- Device State Synchronization ---
 function setHotspotState(device) {
-  // Update old HTML buttons if any exist
+  if (!device || !device.key) return;
+
+  // Update old HTML buttons or indicators if they exist
   const deviceElements = document.querySelectorAll(`[data-device="${device.key}"]`);
   deviceElements.forEach((element) => {
-    element.classList.toggle("is-on", device.is_on);
+    element.classList.toggle("is-on", !!device.is_on);
 
     const lamps = element.matches(".lamp, .lamp-bulb")
       ? [element]
       : element.querySelectorAll(".lamp, .lamp-bulb");
 
     lamps.forEach((lamp) => {
-      lamp.classList.toggle("is-on", device.is_on);
+      lamp.classList.toggle("is-on", !!device.is_on);
     });
   });
 
-  // Update Three.js model if loaded
-  if (window.ThreeScene) {
-    window.ThreeScene.updateDeviceState(device.key, device.is_on);
+  // Update Three.js model
+  if (window.ThreeScene && window.ThreeScene.model && typeof window.ThreeScene.updateDeviceState === "function") {
+    window.ThreeScene.updateDeviceState(device.key, !!device.is_on);
+  }
+
+  // Update PIR motion alert banner and remote screen indicators
+  if (device.key === "sensor_pir") {
+    const pirAlert = document.getElementById("pirAlert");
+    if (pirAlert) {
+      pirAlert.classList.toggle("is-active", !!device.is_on);
+    }
+
+    const miniPir = document.getElementById("mini-pir");
+    const miniPirVal = document.getElementById("mini-pir-val");
+    if (miniPirVal) {
+      miniPirVal.textContent = device.is_on ? "Alerta" : "Libre";
+    }
+    if (miniPir) {
+      miniPir.className = "remote-sensor-mini " + (device.is_on ? "is-active" : "");
+    }
+
+    // Actualizar Panel de Monitoreo de Sensores
+    const pirStatus = document.getElementById("pir-status-value");
+    const pirLastTime = document.getElementById("pir-last-time");
+    if (pirStatus) {
+      pirStatus.textContent = device.is_on ? "⚠️ Presencia Detectada" : "Sin presencia";
+      pirStatus.className = "sensor-badge " + (device.is_on ? "is-active" : "");
+    }
+    if (device.is_on && pirLastTime) {
+      const now = new Date();
+      pirLastTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
   }
 }
 
 function renderDevices(devices) {
+  if (!deviceList) return;
+  if (!Array.isArray(devices)) {
+    console.warn("renderDevices: se esperaba un array de dispositivos", devices);
+    return;
+  }
+
   deviceList.innerHTML = "";
 
   sectionConfig.forEach((section) => {
@@ -132,6 +167,14 @@ function renderDevices(devices) {
     label.className = "remote-section-label";
     label.textContent = section.label;
     deviceList.appendChild(label);
+
+    // Cada sección se envuelve en su propio contenedor para poder darle
+    // una forma distinta por CSS (grid de luces, "rocker" de accesos, etc.)
+    // sin tener que tocar de nuevo el JS más adelante.
+    const group = document.createElement("div");
+    group.className = "remote-section-group";
+    group.setAttribute("data-section", section.id);
+    deviceList.appendChild(group);
 
     // Render each device as a remote button
     sectionDevices.forEach((device) => {
@@ -145,19 +188,23 @@ function renderDevices(devices) {
 
       const icon = kindIcons[device.kind] || kindIcons.light;
 
+      // El icono es SVG estático y confiable; el label del dispositivo puede venir
+      // del backend, así que se escapa antes de insertarlo con innerHTML.
       btn.innerHTML = `
         <div class="remote-btn-icon">${icon}</div>
-        <span class="remote-btn-label">${device.label}</span>
+        <span class="remote-btn-label">${escapeHtml(device.label)}</span>
       `;
-      deviceList.appendChild(btn);
+      group.appendChild(btn);
     });
   });
 }
 
 function renderHistory(events) {
+  if (!historyList) return;
   historyList.innerHTML = "";
-  if (!events.length) {
-    historyList.innerHTML = '<div class="history-item"><span class="event-time">--:--</span><span class="event-message">Sin eventos todavia</span></div>';
+
+  if (!Array.isArray(events) || events.length === 0) {
+    historyList.innerHTML = '<div class="history-item"><span class="event-time">--:--</span><span class="event-message">Sin eventos todavía</span></div>';
     return;
   }
 
@@ -165,8 +212,9 @@ function renderHistory(events) {
     const item = document.createElement("article");
     item.className = "history-item";
 
-    const isActionOn = event.action.includes("encender") || event.action.includes("abrir");
-    const isActionOff = event.action.includes("apagar") || event.action.includes("cerrar");
+    const action = event.action || "";
+    const isActionOn = action.includes("encender") || action.includes("abrir");
+    const isActionOff = action.includes("apagar") || action.includes("cerrar");
 
     let badgeClass = "badge-info";
     let badgeText = "INFO";
@@ -178,13 +226,12 @@ function renderHistory(events) {
       badgeText = "OFF";
     }
 
-    const commandText = event.command || "Comando desconocido";
-
+    // created_at y message pueden venir del backend: se escapan por seguridad
     item.innerHTML = `
-      <span class="event-time">${event.created_at}</span>
+      <span class="event-time">${escapeHtml(event.created_at)}</span>
       <span class="event-message">
         <span class="badge ${badgeClass}">${badgeText}</span>
-        ${commandText} - ${event.message}
+        ${escapeHtml(event.message)}
       </span>
     `;
     historyList.appendChild(item);
@@ -193,8 +240,7 @@ function renderHistory(events) {
 
 async function loadDevices() {
   try {
-    const response = await fetch("/api/devices/");
-    const data = await response.json();
+    const data = await fetchJson("/api/devices/");
     renderDevices(data.devices);
   } catch (error) {
     console.error("Error cargando dispositivos:", error);
@@ -204,8 +250,7 @@ async function loadDevices() {
 
 async function loadHistory() {
   try {
-    const response = await fetch("/api/history/");
-    const data = await response.json();
+    const data = await fetchJson("/api/history/");
     renderHistory(data.events);
   } catch (error) {
     console.error("Error cargando historial:", error);
@@ -213,6 +258,13 @@ async function loadHistory() {
 }
 
 async function toggleDevice(deviceKey, forcedState = null) {
+  if (!deviceKey) return Promise.reject(new Error("deviceKey es requerido"));
+
+  // Evita disparar el mismo toggle dos veces mientras la petición anterior sigue en curso
+  if (pendingToggles.has(deviceKey)) {
+    return Promise.reject(new Error("Acción ya en curso para este dispositivo"));
+  }
+
   let element = document.querySelector(`[data-device="${deviceKey}"].lamp-group`);
   if (!element) {
     element = document.querySelector(`[data-device="${deviceKey}"].control-btn`);
@@ -222,21 +274,32 @@ async function toggleDevice(deviceKey, forcedState = null) {
   }
 
   if (!element) {
-    console.warn(`No se encontro elemento para ${deviceKey}`);
-    return;
+    console.warn(`No se encontró elemento para ${deviceKey}`);
+    return Promise.reject(new Error(`Dispositivo ${deviceKey} no encontrado`));
   }
-
-  SoundEngine.click();
 
   const lamp = element.matches(".lamp, .lamp-bulb") ? element : element.querySelector(".lamp, .lamp-bulb");
   const currentState = lamp ? lamp.classList.contains("is-on") : element.classList.contains("is-on");
   const nextState = forcedState !== null ? forcedState : !currentState;
 
-  // Visual loading state
+  // Regla de seguridad cliente: no permitir abrir la puerta si la cerradura está bloqueada
+  if (deviceKey === "puerta" && nextState === true) {
+    const lockBtn = document.querySelector('[data-device="cerradura"]');
+    const isLocked = lockBtn ? lockBtn.classList.contains("is-on") : false;
+    if (isLocked) {
+      SoundEngine.error();
+      showToast("⚠️ Puerta bloqueada por la cerradura electrónica");
+      return Promise.reject(new Error("La puerta está bloqueada por la cerradura"));
+    }
+  }
+
+  SoundEngine.click();
+
+  pendingToggles.add(deviceKey);
   element.classList.add("is-loading");
 
   try {
-    const response = await fetch(`/api/devices/${deviceKey}/toggle/`, {
+    const data = await fetchJson(`/api/devices/${deviceKey}/toggle/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -245,25 +308,220 @@ async function toggleDevice(deviceKey, forcedState = null) {
       body: JSON.stringify({ is_on: nextState }),
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      showToast(data.message || data.error || "No se pudo enviar el comando");
-      return;
-    }
-
     setHotspotState(data.device);
     await loadDevices();
     await loadHistory();
     showToast(data.message || "Comando enviado");
   } catch (error) {
     console.error("Error al cambiar dispositivo:", error);
-    showToast("Error de conexion");
+    showToast(error.message || "Error de conexión");
+    throw error; // Rethrow to reject the outer promise!
   } finally {
     element.classList.remove("is-loading");
+    pendingToggles.delete(deviceKey);
   }
 }
 
+async function toggleAllLights(targetState) {
+  // Se leen las luces directamente del DOM renderizado (data-kind="light")
+  // para no depender de una lista hardcodeada que puede desincronizarse del backend.
+  const renderedLightKeys = Array.from(document.querySelectorAll('[data-kind="light"][data-device]'))
+    .map((el) => el.getAttribute("data-device"));
+
+  // Fallback por si el DOM todavía no se renderizó (p.ej. antes de la primera carga)
+  const fallbackLightKeys = [
+    "luz_habitacion_1",
+    "luz_habitacion_2",
+    "luz_sala",
+    "luz_cocina",
+    "luz_bano",
+    "luz_jardin",
+  ];
+
+  const lightKeys = renderedLightKeys.length > 0 ? renderedLightKeys : fallbackLightKeys;
+
+  const results = await Promise.allSettled(
+    lightKeys.map((key) =>
+      fetchJson(`/api/devices/${key}/toggle/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({ is_on: targetState }),
+      })
+    )
+  );
+
+  let successCount = 0;
+  let failureCount = 0;
+
+  results.forEach((result) => {
+    if (result.status === "fulfilled" && result.value && result.value.device) {
+      setHotspotState(result.value.device);
+      successCount += 1;
+    } else {
+      failureCount += 1;
+      if (result.status === "rejected") {
+        console.error("Error al cambiar una luz:", result.reason);
+      }
+    }
+  });
+
+  await loadDevices();
+  await loadHistory();
+
+  if (failureCount === 0) {
+    showToast(targetState ? "Todas las luces encendidas" : "Todas las luces apagadas");
+  } else if (successCount === 0) {
+    showToast("Error de conexión al actualizar luces");
+  } else {
+    showToast(`Se actualizaron ${successCount} luces, ${failureCount} fallaron`);
+  }
+}
+
+async function syncWeather() {
+  try {
+    const isAutoTheme = localStorage.getItem("autoTheme") !== "false";
+    const data = await fetchJson(`/api/sync-weather/?auto_theme=${isAutoTheme}`);
+
+    console.log(data.message);
+
+    // Conmutar tema automáticamente simulando la fotoresistencia (LDR) si está activo
+    const isNight = data.is_night;
+
+    if (isAutoTheme) {
+      document.body.classList.toggle("is-day", !isNight);
+      localStorage.setItem("theme", isNight ? "night" : "day");
+      if (window.ThreeScene && typeof window.ThreeScene.updateTheme === "function") {
+        window.ThreeScene.updateTheme(!isNight);
+      }
+    }
+
+    // Actualizar pantalla/barra de sensores en el control remoto
+    const miniLdr = document.getElementById("mini-ldr");
+    const miniLdrVal = document.getElementById("mini-ldr-val");
+    if (miniLdrVal) {
+      miniLdrVal.textContent = isNight ? "Noche" : "Día";
+    }
+    if (miniLdr) {
+      miniLdr.className = "remote-sensor-mini " + (isNight ? "is-active" : "is-success");
+    }
+
+    const miniTemp = document.getElementById("mini-temp");
+    const miniTempVal = document.getElementById("mini-temp-val");
+    if (miniTempVal && typeof data.temperature === "number" && !Number.isNaN(data.temperature)) {
+      miniTempVal.textContent = `${data.temperature.toFixed(1)} °C`;
+    }
+    if (miniTemp && typeof data.temperature === "number" && !Number.isNaN(data.temperature)) {
+      let tempClass = "remote-sensor-mini";
+      if (data.temperature < 18) {
+        tempClass += " is-success";
+      } else if (data.temperature >= 26) {
+        tempClass += " is-active";
+      }
+      miniTemp.className = tempClass;
+    }
+
+    // Actualizar información de Fotoresistencia (LDR) en el panel de sensores
+    const ldrStatus = document.getElementById("ldr-status-value");
+    const ldrIconDay = document.getElementById("ldr-icon-day");
+    const ldrIconNight = document.getElementById("ldr-icon-night");
+    if (ldrStatus) {
+      ldrStatus.textContent = isNight ? "Noche - Oscuro" : "Día - Soleado";
+      ldrStatus.className = "sensor-badge " + (isNight ? "is-active" : "is-success");
+    }
+    if (ldrIconDay && ldrIconNight) {
+      ldrIconDay.style.display = isNight ? "none" : "block";
+      ldrIconNight.style.display = isNight ? "block" : "none";
+    }
+
+    // Actualizar información de Temperatura (TMP36) en el panel de sensores
+    const tempStatus = document.getElementById("temp-status-value");
+    const tempLabel = document.getElementById("temp-label-value");
+    if (tempStatus && typeof data.temperature === "number" && !Number.isNaN(data.temperature)) {
+      tempStatus.textContent = `${data.temperature.toFixed(1)} °C`;
+
+      let label = "Normal ☀️";
+      let badgeClass = "sensor-badge";
+      if (data.temperature < 18) {
+        label = "Fresco / Frío ❄️";
+        badgeClass += " is-success";
+      } else if (data.temperature >= 26) {
+        label = "Caluroso / Motor DC Activo 🔥";
+        badgeClass += " is-active";
+      }
+
+      tempStatus.className = badgeClass;
+      if (tempLabel) {
+        tempLabel.textContent = label;
+      }
+    }
+
+    await loadDevices();
+    await loadHistory();
+  } catch (error) {
+    console.error("Error sincronizando clima:", error);
+  }
+}
+
+let wasConnected = null;
+const systemConnection = document.getElementById("systemConnection");
+
+async function checkSystemStatus() {
+  try {
+    const data = await fetchJson("/api/system/status/");
+
+    if (!systemConnection) return;
+
+    const dot = systemConnection.querySelector(".connection-dot");
+    const text = systemConnection.querySelector("span:last-child");
+
+    if (data.connected) {
+      systemConnection.classList.remove("is-disconnected");
+      dot?.classList.remove("is-disconnected");
+      if (text) text.textContent = "Conectado";
+
+      if (wasConnected === false) {
+        showToast("✅ Arduino Conectado");
+        SoundEngine.success();
+      }
+      wasConnected = true;
+    } else {
+      systemConnection.classList.add("is-disconnected");
+      dot?.classList.add("is-disconnected");
+      if (text) text.textContent = "Desconectado";
+
+      if (wasConnected === true) {
+        showToast("⚠️ Arduino Desconectado");
+        SoundEngine.error();
+      }
+      wasConnected = false;
+    }
+  } catch (error) {
+    console.error("Error al verificar conexión:", error);
+    // Si ni siquiera pudimos consultar el estado, asumimos desconexión para no
+    // seguir sondeando el estado físico contra un backend que no responde.
+    wasConnected = false;
+  }
+}
+
+async function checkPhysicalState() {
+  if (!wasConnected) return; // don't poll if disconnected
+
+  try {
+    const data = await fetchJson("/api/sync-physical/");
+
+    if (data.status === "ok" && data.changed) {
+      await loadDevices();
+      await loadHistory();
+    }
+  } catch (error) {
+    console.error("Error sincronizando estado físico:", error);
+  }
+}
+
+// --- Event Handlers & Delegation ---
 document.addEventListener("click", (event) => {
   let lampGroup = event.target.closest(".lamp-group[data-device]");
   if (lampGroup) {
@@ -278,633 +536,82 @@ document.addEventListener("click", (event) => {
   }
 });
 
-async function syncWeather() {
-  try {
-    const response = await fetch("/api/sync-weather/");
-    const data = await response.json();
-    if (response.ok) {
-      console.log(data.message);
-      await loadDevices();
-      await loadHistory();
-    }
-  } catch (error) {
-    console.error("Error sincronizando clima:", error);
-  }
-}
+refreshButton?.addEventListener("click", async () => {
+  if (refreshButton.disabled) return; // evita clics repetidos mientras refresca
 
-refreshButton.addEventListener("click", async () => {
+  refreshButton.disabled = true;
   refreshButton.style.opacity = "0.6";
-  await syncWeather();
-  await loadDevices();
-  await loadHistory();
-  showToast("Estados y clima actualizados");
-  refreshButton.style.opacity = "1";
-});
-
-loadDevices();
-loadHistory();
-syncWeather();
-
-// Sync weather every 1 minute to keep it up to date
-setInterval(syncWeather, 60000);
-
-let wasConnected = null;
-const systemConnection = document.getElementById("systemConnection");
-
-async function checkSystemStatus() {
   try {
-    const response = await fetch("/api/system/status/");
-    const data = await response.json();
-
-    if (!systemConnection) return;
-
-    const dot = systemConnection.querySelector(".connection-dot");
-    const text = systemConnection.querySelector("span:last-child");
-
-    if (data.connected) {
-      systemConnection.classList.remove("is-disconnected");
-      dot.classList.remove("is-disconnected");
-      text.textContent = "Conectado";
-
-      if (wasConnected === false) {
-        showToast("✅ Arduino Conectado");
-        SoundEngine.success();
-      }
-      wasConnected = true;
-    } else {
-      systemConnection.classList.add("is-disconnected");
-      dot.classList.add("is-disconnected");
-      text.textContent = "Desconectado";
-
-      if (wasConnected === true) {
-        showToast("⚠️ Arduino Desconectado");
-        SoundEngine.error();
-      }
-      wasConnected = false;
-    }
-  } catch (error) {
-    console.error("Error al verificar conexion:", error);
-  }
-}
-
-// Initial check and start polling every 5 seconds
-checkSystemStatus();
-setInterval(checkSystemStatus, 5000);
-
-async function checkPhysicalState() {
-  if (!wasConnected) return; // don't poll if disconnected
-
-  try {
-    const response = await fetch("/api/sync-physical/");
-    const data = await response.json();
-
-    if (data.status === "ok" && data.changed) {
-      await loadDevices();
-      await loadHistory();
-    }
-  } catch (error) {
-    console.error("Error sincronizando estado físico:", error);
-  }
-}
-
-// Poll physical state every 2 seconds
-setInterval(checkPhysicalState, 2000);
-
-// --- Three.js Integration ---
-window.ThreeScene = {
-  scene: null,
-  camera: null,
-  renderer: null,
-  controls: null,
-  raycaster: new THREE.Raycaster(),
-  mouse: new THREE.Vector2(),
-  model: null,
-  meshes: {},
-  mixers: [],
-  clock: new THREE.Clock(),
-
-  mapping: {
-    "luz_habitacion_1": "led_room1",
-    "luz_habitacion_2": "led_room2",
-    "luz_sala": "led_sala",
-    "luz_cocina": "led_kitchen",
-    "luz_bano": "led_bath",
-    "luz_jardin": "led_exterior",
-    "puerta": "door_main",
-    "cerradura": "lock_door",
-    "ventilador": "fan_blade",
-  },
-
-  init() {
-    const canvas = document.getElementById("three-canvas");
-    if (!canvas) return;
-
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    this.scene = new THREE.Scene();
-
-    this.camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    this.camera.position.set(0, 15, 15);
-
-    this.controls = new OrbitControls(this.camera, canvas);
-    this.controls.enableDamping = true;
-    this.controls.maxPolarAngle = Math.PI / 2 - 0.1;
-
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    this.scene.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(20, 30, 20);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.left = -30;
-    dirLight.shadow.camera.right = 30;
-    dirLight.shadow.camera.top = 30;
-    dirLight.shadow.camera.bottom = -30;
-    dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 100;
-    this.scene.add(dirLight);
-
-    // Load Model
-    const loader = new GLTFLoader();
-    loader.load('/static/dashboard/casa_domotica_blender.glb', (gltf) => {
-      this.model = gltf.scene;
-
-      this.model.traverse((child) => {
-        // Ocultar planos de referencia exportados por error (ej. "Plano", "Plano.001")
-        if (child.name.toLowerCase().startsWith("plano")) {
-          child.visible = false;
-        }
-
-        this.meshes[child.name] = child;
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          if (child.material) {
-            if (Array.isArray(child.material)) {
-              child.material = child.material.map(m => m.clone());
-            } else {
-              child.material = child.material.clone();
-            }
-          }
-        }
-      });
-
-      // Center model
-      const box = new THREE.Box3().setFromObject(this.model);
-      const center = box.getCenter(new THREE.Vector3());
-      this.model.position.sub(center);
-
-      this.scene.add(this.model);
-
-      // --- Setup Door Pivot & Group ---
-      let doorMain = null;
-      this.model.traverse(child => {
-        if (child.name.toLowerCase().includes("door_main")) {
-          doorMain = child;
-        }
-      });
-
-      if (doorMain && doorMain.parent) {
-        const doorGroup = new THREE.Group();
-        doorMain.parent.add(doorGroup);
-
-        if (doorMain.geometry) {
-          doorMain.geometry.computeBoundingBox();
-          const localBox = doorMain.geometry.boundingBox;
-          const hingeLocal = new THREE.Vector3(localBox.min.x, 0, 0);
-          const hingeWorld = doorMain.localToWorld(hingeLocal);
-          doorMain.parent.worldToLocal(hingeWorld);
-          doorGroup.position.copy(hingeWorld);
-        } else {
-          const box = new THREE.Box3().setFromObject(doorMain);
-          const hingeWorld = new THREE.Vector3(box.min.x, box.getCenter(new THREE.Vector3()).y, box.getCenter(new THREE.Vector3()).z);
-          doorMain.parent.worldToLocal(hingeWorld);
-          doorGroup.position.copy(hingeWorld);
-        }
-
-        const doorParts = [
-          "door_main",
-          "door_panel_lower",
-          "door_panel_upper",
-          "door_window_frame",
-          "door_window_glass",
-          "door_knob",
-          "lock_door"
-        ];
-
-        const partsToAttach = [];
-        this.model.traverse(child => {
-          doorParts.forEach(partName => {
-            if (child.name.toLowerCase().includes(partName.toLowerCase())) {
-              partsToAttach.push(child);
-            }
-          });
-        });
-
-        partsToAttach.forEach(part => {
-          doorGroup.attach(part);
-        });
-
-        this.meshes["door_pivot"] = doorGroup;
-      }
-
-      // --- Setup Fan Group ---
-      let motor = null;
-      this.model.traverse(child => {
-        if (child.name.toLowerCase().includes("fan_motor_body")) {
-          motor = child;
-        }
-      });
-
-      if (motor && motor.parent) {
-        const fanGroup = new THREE.Group();
-        motor.parent.add(fanGroup);
-
-        const box = new THREE.Box3().setFromObject(motor);
-        const motorCenter = box.getCenter(new THREE.Vector3());
-        motor.parent.worldToLocal(motorCenter);
-        fanGroup.position.copy(motorCenter);
-
-        const fanParts = ["fan_motor_body", "fan_blade_0", "fan_blade_1", "fan_blade_2", "fan_blade_3"];
-        const partsToAttach = [];
-        this.model.traverse(child => {
-          fanParts.forEach(partName => {
-            if (child.name.toLowerCase().includes(partName.toLowerCase())) {
-              partsToAttach.push(child);
-            }
-          });
-        });
-
-        partsToAttach.forEach(part => {
-          fanGroup.attach(part);
-        });
-
-        this.meshes["fan_group"] = fanGroup;
-      }
-
-      // Re-apply states now that model is loaded
-      loadDevices();
-    }, undefined, (error) => {
-      console.error("Error loading 3D model:", error);
-    });
-
-    // Resize handler
-    window.addEventListener('resize', () => {
-      if (!canvas.parentElement) return;
-      const width = canvas.parentElement.clientWidth;
-      const height = canvas.parentElement.clientHeight;
-      this.renderer.setSize(width, height);
-      this.camera.aspect = width / height;
-      this.camera.updateProjectionMatrix();
-    });
-
-    // Click handler for raycasting
-    canvas.addEventListener('pointerdown', (e) => this.onClick(e));
-
-    this.animate();
-  },
-
-  animate() {
-    requestAnimationFrame(() => this.animate());
-    const delta = this.clock.getDelta();
-
-    this.controls.update();
-
-    // Animate fan if on
-    const fanGroup = this.meshes["fan_group"];
-    if (fanGroup && fanGroup.userData.isOn) {
-      fanGroup.rotation.y += 10 * delta;
-    } else if (!fanGroup) {
-      // Fallback
-      if (this.meshes["fan_motor_body"] && this.meshes["fan_motor_body"].userData.isOn) {
-        this.meshes["fan_motor_body"].rotation.y += 10 * delta;
-      }
-      for (let i = 0; i < 4; i++) {
-        const blade = this.meshes[`fan_blade_${i}`];
-        if (blade && blade.userData.isOn) {
-          blade.rotation.y += 10 * delta;
-        }
-      }
-    }
-
-    this.renderer.render(this.scene, this.camera);
-  },
-
-  onClick(event) {
-    const canvas = this.renderer.domElement;
-    const rect = canvas.getBoundingClientRect();
-    this.mouse.x = ((event.clientX - rect.left) / canvas.clientWidth) * 2 - 1;
-    this.mouse.y = -((event.clientY - rect.top) / canvas.clientHeight) * 2 + 1;
-
-    this.raycaster.setFromCamera(this.mouse, this.camera);
-    const intersects = this.raycaster.intersectObjects(this.scene.children, true);
-
-    if (intersects.length > 0) {
-      const clickedMesh = intersects[0].object;
-
-      const meshName = clickedMesh.name.toLowerCase();
-      if (meshName.includes("lock_door") || meshName.includes("wall_led_indicator")) {
-        toggleDevice("cerradura");
-        return;
-      } else if (meshName.includes("door_")) {
-        toggleDevice("puerta");
-        return;
-      } else if (meshName.includes("fan_")) {
-        toggleDevice("ventilador");
-        return;
-      }
-
-      // Find which device key maps to this mesh name
-      let foundDeviceKey = null;
-      for (const [key, mappingName] of Object.entries(this.mapping)) {
-        if (meshName.includes(mappingName.toLowerCase())) {
-          foundDeviceKey = key;
-          break;
-        }
-      }
-
-      if (foundDeviceKey) {
-        toggleDevice(foundDeviceKey);
-      }
-    }
-  },
-
-  updateDeviceState(deviceKey, isOn) {
-    const meshName = this.mapping[deviceKey];
-    if (!meshName) return;
-
-    if (deviceKey === "puerta") {
-      const door = this.meshes["door_pivot"] || this.meshes[meshName];
-      if (door) {
-        // Rotación de la puerta (-90 grados para abrir hacia adentro)
-        door.rotation.y = isOn ? -Math.PI / 2 : 0;
-      }
-    } else if (deviceKey === "cerradura") {
-      this.model.traverse(child => {
-        if ((child.name.toLowerCase().includes("lock_door") || child.name.toLowerCase().includes("wall_led_indicator")) && child.isMesh) {
-          const mats = Array.isArray(child.material) ? child.material : [child.material];
-          mats.forEach(mat => {
-            if (mat) {
-              if (isOn) {
-                mat.emissive.setHex(0xff3333);
-                mat.emissiveIntensity = 2;
-              } else {
-                mat.emissive.setHex(0x33ff33);
-                mat.emissiveIntensity = 1.5;
-              }
-            }
-          });
-        }
-      });
-    } else if (deviceKey === "ventilador") {
-      const fan = this.meshes["fan_group"];
-      if (fan) fan.userData.isOn = isOn;
-
-      if (this.meshes["fan_motor_body"]) this.meshes["fan_motor_body"].userData.isOn = isOn;
-      for (let i = 0; i < 4; i++) {
-        if (this.meshes[`fan_blade_${i}`]) this.meshes[`fan_blade_${i}`].userData.isOn = isOn;
-      }
-    } else {
-      // Assume it's a light (led_room1, etc)
-      const led = this.meshes[meshName];
-      if (led && led.material) {
-        if (isOn) {
-          led.material.emissive.setHex(0xffaa00);
-          led.material.emissiveIntensity = 2;
-        } else {
-          led.material.emissive.setHex(0x000000);
-          led.material.emissiveIntensity = 0;
-        }
-      }
-    }
-  }
-};
-
-async function toggleAllLights(targetState){
-  const lightKeys = [
-    "luz_habitacion_1",
-    "luz_habitacion_2",
-    "luz_sala",
-    "luz_cocina",
-    "luz_bano",
-    "luz_jardin"
-  ];
-  
-  const promises = lightKeys.map((key) => {
-    return fetch(`/api/devices/${key}/toggle/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: JSON.stringify({ is_on: targetState }),
-    }).then(res => res.json());
-  });
-
-  try {
-    const results = await Promise.all(promises);
-    results.forEach(data => {
-      if (data && data.device) {
-        setHotspotState(data.device);
-      }
-    });
+    await syncWeather();
     await loadDevices();
     await loadHistory();
-    showToast(targetState ? "Todas las luces encendidas" : "Todas las luces apagadas");
-  } catch (error) {
-    console.error("Error al cambiar todas las luces:", error);
-    showToast("Error de conexion al actualizar luces");
+    showToast("Estados y clima actualizados");
+  } finally {
+    refreshButton.disabled = false;
+    refreshButton.style.opacity = "1";
   }
+});
+
+// --- Polling intervals (se pausan cuando la pestaña no está visible) ---
+let weatherIntervalId = null;
+let systemStatusIntervalId = null;
+let physicalStateIntervalId = null;
+
+function startPolling() {
+  stopPolling();
+  weatherIntervalId = setInterval(syncWeather, 60000);       // Poll weather every 1 minute
+  systemStatusIntervalId = setInterval(checkSystemStatus, 5000);  // Check Arduino connection every 5s
+  physicalStateIntervalId = setInterval(checkPhysicalState, 2000); // Poll Arduino physical state changes every 2s
 }
 
-// --- Voice Control Engine ---
-const VoiceControl = {
-  recognition: null,
-  isListening: false,
-  btn: null,
-  led: null,
+function stopPolling() {
+  if (weatherIntervalId) clearInterval(weatherIntervalId);
+  if (systemStatusIntervalId) clearInterval(systemStatusIntervalId);
+  if (physicalStateIntervalId) clearInterval(physicalStateIntervalId);
+  weatherIntervalId = null;
+  systemStatusIntervalId = null;
+  physicalStateIntervalId = null;
+}
 
-  deviceSynonyms: {
-    "luz_habitacion_1": ["habitacion 1", "habitacion uno", "cuarto 1", "cuarto uno", "luz 1", "dormitorio 1", "dormitorio uno"],
-    "luz_habitacion_2": ["habitacion 2", "habitacion dos", "cuarto 2", "cuarto dos", "luz 2", "dormitorio 2", "dormitorio dos"],
-    "luz_sala": ["luz sala", "luz de la sala", "luz salon", "luz del salon", "sala", "salon"],
-    "luz_cocina": ["luz de la cocina", "luz cocina", "cocina"],
-    "luz_bano": ["luz del bano", "luz del baño", "luz bano", "luz baño", "bano", "baño", "sanitario"],
-    "luz_jardin": ["luz del jardin", "luz jardin", "jardin", "patio", "exterior", "luz exterior"],
-    "puerta": ["puerta principal", "puerta de entrada", "puerta", "porton", "entrada"],
-    "cerradura": ["cerradura", "seguro", "cerrojo", "candado", "llave"],
-    "sensor_pir": ["sensor de movimiento", "sensor pir", "sensor"],
-    "ventilador": ["ventilador de la sala", "ventilador sala", "ventilador", "aire", "abanico"]
-  },
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    stopPolling();
+  } else {
+    // Al volver a la pestaña, refrescamos de inmediato y reanudamos el sondeo
+    checkSystemStatus();
+    loadDevices();
+    loadHistory();
+    startPolling();
+  }
+});
 
-  onKeywords: ["encender", "prender", "conectar", "activar", "abrir", "enciende", "prende", "conecta", "activa", "abre", "on"],
-  offKeywords: ["apagar", "desconectar", "desactivar", "cerrar", "apaga", "desconecta", "desactiva", "cierra", "off"],
+// --- Initialization ---
+window.addEventListener('DOMContentLoaded', () => {
+  // Init modules
+  ThreeScene.init(toggleDevice, loadDevices);
+  VoiceControl.init(toggleDevice, toggleAllLights);
+  initModal(loadHistory);
+  initSensorModal();
+  initVoiceHelpModal();
 
-  normalizeText(text) {
-    if (!text) return "";
-    return text.toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Remove accents
-      .trim();
-  },
-
-  init() {
-    this.btn = document.getElementById("voiceBtn");
-    this.led = document.getElementById("remoteLed");
-    if (!this.btn) return;
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn("SpeechRecognition not supported in this browser.");
-      this.btn.addEventListener("click", () => {
-        SoundEngine.error();
-        showToast("Tu navegador no soporta control por voz (usa Chrome o Edge)");
-      });
-      return;
-    }
-
-    this.recognition = new SpeechRecognition();
-    this.recognition.lang = 'es-ES';
-    this.recognition.interimResults = false;
-    this.recognition.maxAlternatives = 1;
-
-    this.recognition.onstart = () => {
-      this.isListening = true;
-      this.btn.classList.add("is-listening");
-      if (this.led) this.led.classList.add("is-listening");
-      // Play a starting tone (Siri/Alexa-like high beep)
-      SoundEngine.playTone(880, 'sine', 0.1, 0.05);
-      setTimeout(() => SoundEngine.playTone(987, 'sine', 0.1, 0.05), 80);
-    };
-
-    this.recognition.onend = () => {
-      this.isListening = false;
-      this.btn.classList.remove("is-listening");
-      if (this.led) this.led.classList.remove("is-listening");
-    };
-
-    this.recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
-      this.isListening = false;
-      this.btn.classList.remove("is-listening");
-      if (this.led) this.led.classList.remove("is-listening");
-      SoundEngine.error();
-      if (event.error === 'not-allowed') {
-        showToast("Permiso de micrófono denegado");
-      } else if (event.error === 'network') {
-        showToast("Error de red. Brave bloquea esta función por privacidad. Usa Chrome/Edge o verifica http://localhost:8000");
-      } else {
-        showToast(`Error al escuchar: ${event.error}`);
-      }
-    };
-
-    this.recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      this.processCommand(transcript);
-    };
-
-    this.btn.addEventListener("click", () => {
-      if (this.isListening) {
-        this.recognition.stop();
-      } else {
-        this.recognition.start();
+  // Configurar el checkbox del auto-theme basado en localStorage
+  const autoToggle = document.getElementById("auto-theme-toggle");
+  if (autoToggle) {
+    autoToggle.checked = localStorage.getItem("autoTheme") !== "false";
+    autoToggle.addEventListener("change", (e) => {
+      localStorage.setItem("autoTheme", e.target.checked ? "true" : "false");
+      if (e.target.checked) {
+        syncWeather(); // Sincronización inmediata al activar
       }
     });
-  },
-
-  processCommand(rawSpeech) {
-    const speech = this.normalizeText(rawSpeech);
-    console.log(`Voz reconocida: "${rawSpeech}" (Normalizada: "${speech}")`);
-
-    // 1. Determine the target state (ON, OFF, or toggle/null)
-    let targetState = null;
-    const hasOn = this.onKeywords.some(keyword => speech.includes(keyword));
-    const hasOff = this.offKeywords.some(keyword => speech.includes(keyword));
-
-    if (hasOn && !hasOff) {
-      targetState = true;
-    } else if (hasOff && !hasOn) {
-      targetState = false;
-    }
-
-    // 2. Identify target device
-    let matchedDeviceKey = null;
-    let longestMatchLength = 0;
-
-    for (const [deviceKey, synonyms] of Object.entries(this.deviceSynonyms)) {
-      for (const synonym of synonyms) {
-        const normalizedSynonym = this.normalizeText(synonym);
-        if (speech.includes(normalizedSynonym)) {
-          if (normalizedSynonym.length > longestMatchLength) {
-            matchedDeviceKey = deviceKey;
-            longestMatchLength = normalizedSynonym.length;
-          }
-        }
-      }
-    }
-
-    // Check if the command refers to "all lights" or "everything"
-    const isAllLights = speech.includes("todas las luces") || 
-                        speech.includes("todas las habitaciones") ||
-                        speech.includes("todo") ||
-                        (speech.includes("luces") && matchedDeviceKey === null) ||
-                        (speech.includes("luz") && matchedDeviceKey === null) ||
-                        (speech.includes("todas") && matchedDeviceKey === null);
-
-    if (isAllLights) {
-      if (targetState !== null) {
-        showToast(`Procesando: "${rawSpeech}" (Todas las luces)`);
-        toggleAllLights(targetState).then(() => {
-          SoundEngine.success();
-        }).catch(err => {
-          console.error(err);
-          SoundEngine.error();
-        });
-      } else {
-        // Alternar todas las luces
-        const lightButtons = document.querySelectorAll('.remote-btn[data-kind="light"]');
-        let anyLightOn = false;
-        lightButtons.forEach(btn => {
-          if (btn.classList.contains('is-on')) anyLightOn = true;
-        });
-        const nextState = !anyLightOn;
-        showToast(`Alternando todas las luces -> ${nextState ? "Encender" : "Apagar"}`);
-        toggleAllLights(nextState).then(() => {
-          SoundEngine.success();
-        }).catch(err => {
-          console.error(err);
-          SoundEngine.error();
-        });
-      }
-      return;
-    }
-
-    if (matchedDeviceKey) {
-      const stateText = targetState === true ? "encender" : (targetState === false ? "apagar" : "cambiar");
-      showToast(`Procesando: "${rawSpeech}"`);
-
-      toggleDevice(matchedDeviceKey, targetState).then(() => {
-        SoundEngine.success();
-      }).catch(err => {
-        console.error(err);
-        SoundEngine.error();
-      });
-    } else {
-      SoundEngine.error();
-      showToast(`No se entendió el comando: "${rawSpeech}"`);
-    }
   }
-};
 
-// Initialize Three.js scene and Voice Control
-window.addEventListener('DOMContentLoaded', () => {
-  window.ThreeScene.init();
-  VoiceControl.init();
+  // Initial updates
+  loadDevices();
+  loadHistory();
+  syncWeather();
+  checkSystemStatus();
+
+  // Set up intervals
+  startPolling();
 });

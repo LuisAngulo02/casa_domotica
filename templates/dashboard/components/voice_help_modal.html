@@ -1,0 +1,54 @@
+<div id="voiceHelpModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="voiceHelpTitle">
+  <div class="modal-container" style="max-width: 480px;">
+    <div class="modal-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+        <h2 id="voiceHelpTitle" class="modal-title">Comandos de Voz Soportados</h2>
+      </div>
+      <button id="closeVoiceHelpModal" class="modal-close-btn" type="button" aria-label="Cerrar modal" title="Cerrar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 0.8rem; color: var(--muted); margin-bottom: 16px; line-height: 1.4; margin-top: 0;">
+        Haz clic en el icono del micrófono del control remoto y pronuncia alguno de los siguientes comandos en español para controlar la maqueta:
+      </p>
+
+      <div class="sensor-card" style="margin-bottom: 12px; padding: 12px 16px;">
+        <h4 style="font-size: 0.85rem; font-weight: 700; margin: 0 0 8px 0; color: var(--ink); display: flex; align-items: center; gap: 6px;">
+          <span style="display:inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10b981;"></span>
+          Ejemplos de Comandos Clave:
+        </h4>
+        <ul style="font-size: 0.8rem; color: var(--ink); padding-left: 20px; margin: 0; line-height: 1.6;">
+          <li><em>"Encender luz habitación uno"</em></li>
+          <li><em>"Apagar luz de la cocina"</em></li>
+          <li><em>"Abrir la puerta principal"</em> o <em>"Cerrar cerrojo"</em></li>
+          <li><em>"Abrir accesos"</em> o <em>"Entrar a la casa"</em> (Desbloquea cerradura y abre puerta)</li>
+          <li><em>"Cerrar la casa"</em> o <em>"Bloquear entrada"</em> (Cierra puerta y bloquea cerradura)</li>
+          <li><em>"Encender todas las luces"</em> o <em>"Apagar todo"</em></li>
+        </ul>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--line); color: var(--muted);">
+              <th style="padding: 8px 4px; font-weight: 600;">Acción / Verbo</th>
+              <th style="padding: 8px 4px; font-weight: 600;">Dispositivo (Sinónimos)</th>
+            </tr>
+          </thead>
+          <tbody style="color: var(--ink);">
+            <tr style="border-bottom: 1px solid var(--line);">
+              <td style="padding: 8px 4px; vertical-align: top;"><strong style="color: var(--teal);">Encender / Prender / Activar / Abrir</strong></td>
+              <td style="padding: 8px 4px; color: var(--muted); line-height: 1.4;">Habitación 1 / 2, Sala, Cocina, Baño, Jardín / Exterior, Puerta, Cerradura, Ventilador / Aire.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--line);">
+              <td style="padding: 8px 4px; vertical-align: top;"><strong style="color: #ef4444;">Apagar / Desconectar / Cerrar</strong></td>
+              <td style="padding: 8px 4px; color: var(--muted); line-height: 1.4;">Habitación 1 / 2, Sala, Cocina, Baño, Jardín, Puerta, Cerradura, Ventilador.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

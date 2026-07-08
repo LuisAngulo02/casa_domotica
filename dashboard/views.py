@@ -102,23 +102,43 @@ def update_temperature(request):
 @require_GET
 def sync_weather(request):
     ensure_default_devices()
-    try:
-        # Guayaquil, Ecuador coordinates
-        url = "https://api.open-meteo.com/v1/forecast?latitude=-2.1962&longitude=-79.8862&current_weather=true"
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=5) as response:
-            data = json.loads(response.read().decode())
-            current_temp = data.get("current_weather", {}).get("temperature", 20.0)
-    except Exception as e:
-        return JsonResponse({"error": f"No se pudo obtener el clima: {e}"}, status=500)
-
-    # Ecuador time is UTC-5
-    ecuador_time = datetime.utcnow() - timedelta(hours=5)
-    hour = ecuador_time.hour
-
-    # Day is 6:00 to 17:59, Night is 18:00 to 5:59
-    is_night = hour >= 18 or hour < 6
+    from django.conf import settings
+    from django.core.cache import cache
     
+    is_night = False
+    current_temp = 20.0
+    source_info = "API Clima"
+    
+    if not settings.ARDUINO_SIMULATION_MODE:
+        # Modo Real: Leer del cache poblado por la sincronización física del Arduino
+        current_temp = cache.get("arduino_temperature")
+        is_night = cache.get("arduino_is_night")
+        
+        if current_temp is None or is_night is None:
+            # Forzar una lectura física inmediata para poblar el cache
+            sync_physical_state()
+            current_temp = cache.get("arduino_temperature", 22.0)
+            is_night = cache.get("arduino_is_night", False)
+            
+        source_info = "Sensores Físicos Arduino"
+    else:
+        # Modo Simulación: Consultar API meteorológico
+        try:
+            # Guayaquil, Ecuador coordinates
+            url = "https://api.open-meteo.com/v1/forecast?latitude=-2.1962&longitude=-79.8862&current_weather=true"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=5) as response:
+                data = json.loads(response.read().decode())
+                current_temp = data.get("current_weather", {}).get("temperature", 20.0)
+        except Exception:
+            current_temp = 20.0 # Fallback seguro
+            
+        # Ecuador time is UTC-5
+        ecuador_time = datetime.utcnow() - timedelta(hours=5)
+        hour = ecuador_time.hour
+        # Day is 6:00 to 17:59, Night is 18:00 to 5:59
+        is_night = hour >= 18 or hour < 6
+        
     # Update PIR Sensor based on day/night
     try:
         pir = DeviceState.objects.get(key="sensor_pir")
@@ -136,8 +156,17 @@ def sync_weather(request):
     except DeviceState.DoesNotExist:
         pass
 
+    # Automatización de luces interiores basada en fotoresistencia (LDR / is_night) si está activo
+    auto_theme_param = request.GET.get("auto_theme", "true").lower() == "true"
+    if auto_theme_param:
+        interior_lights = DeviceState.objects.filter(kind=DeviceState.LIGHT).exclude(key="luz_jardin")
+        for light in interior_lights:
+            if light.is_on != is_night:
+                toggle_device_state(light, is_night)
+
+    ecuador_time = datetime.utcnow() - timedelta(hours=5)
     return JsonResponse({
-        "message": f"Clima sincronizado. Hora local: {ecuador_time.strftime('%H:%M')}, Temperatura: {current_temp}°C",
+        "message": f"Clima sincronizado ({source_info}). Hora local: {ecuador_time.strftime('%H:%M')}, Temperatura: {current_temp}°C",
         "is_night": is_night,
         "temperature": current_temp
     })

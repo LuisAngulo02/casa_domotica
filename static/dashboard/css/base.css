@@ -1,0 +1,158 @@
+:root {
+  color-scheme: dark;
+  --bg: #050506; /* Negro profundo con leve matiz frío, menos "plano" */
+  --ink: #f5f5f7; /* Texto blanco-gris brillante */
+  --muted: #b0b0b5; /* Gris apagado legible con buen contraste */
+  --line: rgba(255,255,255,0.06);
+  --panel: rgba(12,12,12,0.6); /* Panel negro translúcido */
+
+  --teal: #5b9bff; /* Azul brillante premium (modo noche, alto contraste sobre negro) */
+  --shadow: 0 30px 60px rgba(0,0,0,0.8);
+  --glass-border: 1px solid rgba(255,255,255,0.09);
+  --glow: 0 0 25px rgba(91,155,255,0.25);
+
+  --h1-grad-1: #ffffff;
+  --h1-grad-2: #86868b;
+  --card-bg: rgba(20,20,20,0.45);
+  --btn-bg: rgba(255,255,255,0.04);
+  --btn-bg-hover: rgba(255,255,255,0.08);
+  --icon-bg: rgba(255,255,255,0.08);
+  --liquid-glare: linear-gradient(135deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.01) 50%, transparent 100%);
+
+  /* Tokens de badges — modo noche (estilo "GitHub dark") */
+  --badge-on-bg: rgba(46,160,67,0.2);
+  --badge-on-fg: #3fb950;
+  --badge-on-border: rgba(46,160,67,0.4);
+
+  --badge-off-bg: rgba(248,81,73,0.2);
+  --badge-off-fg: #ff7b72;
+  --badge-off-border: rgba(248,81,73,0.4);
+
+  --badge-info-bg: rgba(47,129,247,0.2);
+  --badge-info-fg: #58a6ff;
+  --badge-info-border: rgba(47,129,247,0.4);
+}
+
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+
+body {
+  min-height: 100vh; margin: 0;
+  font-family: 'Outfit', sans-serif;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(91, 155, 255, 0.07) 0%, transparent 50rem),
+    radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.07) 0%, transparent 50rem),
+    var(--bg);
+  color: var(--ink);
+  transition: background 0.5s ease, color 0.5s ease;
+}
+
+body.is-day {
+  --bg: #f6f5f2; /* "Papel" cálido, no blanco puro: menos deslumbre */
+  --ink: #1d1d1f; /* Texto oscuro legible */
+  --panel: rgba(255,255,255,0.65); /* Panel blanco translúcido */
+  --glass-border: 1px solid rgba(0,0,0,0.07);
+  --muted: #4e4e54; /* Contraste reforzado en modo claro */
+
+  /* Sombra con tinte cálido coherente en vez de negro puro duro */
+  --shadow: 0 20px 40px rgba(60,50,30,0.10);
+
+  --teal: #1d4ed8; /* Azul más profundo: pasa AA (4.5:1) sobre paneles claros */
+  --glow: 0 0 20px rgba(29,78,216,0.18); /* Glow propio, menos saturado que el de noche */
+
+  --h1-grad-1: #1d1d1f; --h1-grad-2: #4e4e54;
+  --card-bg: rgba(255,255,255,0.3);
+  --btn-bg: rgba(0,0,0,0.03);
+  --btn-bg-hover: rgba(0,0,0,0.06);
+  --icon-bg: rgba(0,0,0,0.05);
+  --liquid-glare: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+
+  /* Tokens de badges — modo día, recalculados para contraste AA sobre fondo claro */
+  --badge-on-bg: rgba(22,101,52,0.12);
+  --badge-on-fg: #15803d;
+  --badge-on-border: rgba(22,101,52,0.3);
+
+  --badge-off-bg: rgba(185,28,28,0.12);
+  --badge-off-fg: #b91c1c;
+  --badge-off-border: rgba(185,28,28,0.3);
+
+  --badge-info-bg: rgba(29,78,216,0.12);
+  --badge-info-fg: #1d4ed8;
+  --badge-info-border: rgba(29,78,216,0.3);
+}
+
+button { border: 0; font: inherit; }
+
+.shell { width: min(1420px, calc(100% - 32px)); margin: 0 auto; padding: 16px 0 28px; }
+
+/* === DIVIDER === */
+.remote-divider {
+  height: 2px; margin: 6px 24px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  border-radius: 1px;
+}
+body.is-day .remote-divider {
+  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.1), transparent);
+}
+
+/* === LOADING === */
+.is-loading { position: relative; pointer-events: none; }
+.remote-btn.is-loading .remote-btn-icon {
+  color: transparent !important;
+}
+.remote-btn.is-loading .remote-btn-icon svg { visibility: hidden; }
+.remote-btn.is-loading .remote-btn-icon::after {
+  content: ""; position: absolute; inset: 0; margin: auto;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: var(--teal); border-radius: 50%;
+  animation: spin-loader 0.7s linear infinite;
+}
+@keyframes spin-loader { to { transform: rotate(360deg); } }
+
+/* === ICON BUTTON === */
+.icon-button {
+  display: grid; place-items: center;
+  width: 34px; height: 34px;
+  border: var(--glass-border); border-radius: 10px;
+  background: var(--btn-bg); color: var(--teal);
+  cursor: pointer; transition: background .2s ease, color .2s ease;
+}
+.icon-button:hover { background: var(--btn-bg-hover); }
+
+/* === BADGES === */
+.badge {
+  padding: 2px 6px; border-radius: 10px;
+  font-size: 0.58rem; font-weight: 800; text-transform: uppercase;
+}
+.badge-on { background: var(--badge-on-bg); color: var(--badge-on-fg); border: 1px solid var(--badge-on-border); }
+.badge-off { background: var(--badge-off-bg); color: var(--badge-off-fg); border: 1px solid var(--badge-off-border); }
+.badge-info { background: var(--badge-info-bg); color: var(--badge-info-fg); border: 1px solid var(--badge-info-border); }
+
+/* === SENSOR BADGES (panel de monitoreo) === */
+/* Reutilizan los mismos tokens que .badge-* para quedar consistentes en ambos temas */
+.sensor-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  background: var(--badge-info-bg);
+  color: var(--badge-info-fg);
+  border: 1px solid var(--badge-info-border);
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+.sensor-badge.is-active {
+  background: var(--badge-off-bg);
+  color: var(--badge-off-fg);
+  border-color: var(--badge-off-border);
+}
+.sensor-badge.is-success {
+  background: var(--badge-on-bg);
+  color: var(--badge-on-fg);
+  border-color: var(--badge-on-border);
+}
