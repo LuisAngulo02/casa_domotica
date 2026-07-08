@@ -1,0 +1,93 @@
+<div id="sensorModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="sensorModalTitle">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke: var(--teal);"><path d="M4 22V4c0-.5.2-1 .6-1.4C5 2.2 5.5 2 6 2h12c.5 0 1 .2 1.4.6.4.4.6.9.6 1.4v18l-4-2-4 2-4-2-4 2z"/><path d="M12 11h.01"/><path d="M12 7h.01"/><path d="M8 11h.01"/><path d="M8 7h.01"/><path d="M16 11h.01"/><path d="M16 7h.01"/><path d="M12 15h.01"/><path d="M8 15h.01"/><path d="M16 15h.01"/></svg>
+        <h2 id="sensorModalTitle" class="modal-title">Monitoreo de Sensores (Maqueta)</h2>
+      </div>
+      <button id="closeSensorModal" class="modal-close-btn" type="button" aria-label="Cerrar modal" title="Cerrar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      
+      <!-- LDR Fotoresistencia -->
+      <div class="sensor-card">
+        <div class="sensor-card-header">
+          <div class="sensor-icon-wrapper">
+            <svg id="ldr-icon-day" class="sensor-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            <svg id="ldr-icon-night" class="sensor-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          </div>
+          <div>
+            <h3 class="sensor-name">Fotoresistencia (LDR)</h3>
+            <p class="sensor-desc">Monitorea la luz ambiental externa</p>
+          </div>
+        </div>
+        <div class="sensor-card-body">
+          <div class="sensor-value-group">
+            <span class="sensor-label">Estado actual:</span>
+            <span id="ldr-status-value" class="sensor-badge">Día - Soleado</span>
+          </div>
+          
+          <div class="sensor-toggle-row">
+            <div class="sensor-toggle-label">
+              <span class="font-bold">Control de Tema Automático</span>
+              <span class="text-xs text-muted">Sincroniza el tema/luces por LDR</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="auto-theme-toggle" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIR Sensor de Movimiento -->
+      <div class="sensor-card">
+        <div class="sensor-card-header">
+          <div class="sensor-icon-wrapper">
+            <svg class="sensor-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 21a6 6 0 0 0-12 0"/><circle cx="12" cy="10" r="4"/><path d="M12 2v2"/></svg>
+          </div>
+          <div>
+            <h3 class="sensor-name">Sensor de Movimiento (PIR)</h3>
+            <p class="sensor-desc">Detección de presencia en la puerta</p>
+          </div>
+        </div>
+        <div class="sensor-card-body">
+          <div class="sensor-value-group">
+            <span class="sensor-label">Estado actual:</span>
+            <span id="pir-status-value" class="sensor-badge">Sin presencia</span>
+          </div>
+          <div class="sensor-meta">
+            <span class="sensor-label">Última activación:</span>
+            <span id="pir-last-time" class="sensor-meta-value">Nunca</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TMP36 Sensor de Temperatura -->
+      <div class="sensor-card">
+        <div class="sensor-card-header">
+          <div class="sensor-icon-wrapper">
+            <svg class="sensor-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+          </div>
+          <div>
+            <h3 class="sensor-name">Sensor de Temperatura (TMP36)</h3>
+            <p class="sensor-desc">Controla la activación del motor DC</p>
+          </div>
+        </div>
+        <div class="sensor-card-body">
+          <div class="sensor-value-group">
+            <span class="sensor-label">Temperatura:</span>
+            <span id="temp-status-value" class="sensor-badge">-- °C</span>
+          </div>
+          <div class="sensor-meta">
+            <span class="sensor-label">Estado ambiente:</span>
+            <span id="temp-label-value" class="sensor-meta-value">Normal</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

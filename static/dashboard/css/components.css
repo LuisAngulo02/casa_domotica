@@ -1,0 +1,268 @@
+/* ==========================================
+   TOPBAR & CONNECTION STATUS
+   ========================================== */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 16px;
+}
+.eyebrow {
+  margin: 0 0 4px; color: var(--teal); font-size: .75rem; font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(47,129,247,0.4);
+}
+h1, h2 { margin: 0; letter-spacing: -0.5px; }
+h1 {
+  font-size: clamp(1.3rem, 2vw, 2.2rem); line-height: 1.1; font-weight: 800;
+  background: linear-gradient(to right, var(--h1-grad-1), var(--h1-grad-2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.connection {
+  display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+  border: var(--glass-border); border-radius: 12px;
+  background: var(--panel); backdrop-filter: blur(12px);
+  color: #3fb950; font-weight: 600; font-size: 0.8rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+.connection-dot {
+  width: 8px; height: 8px; border-radius: 999px;
+  background: #2ea043; box-shadow: 0 0 0 4px rgba(46,160,67,0.2);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(46,160,67,0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(46,160,67,0); }
+  100% { box-shadow: 0 0 0 0 rgba(46,160,67,0); }
+}
+.connection.is-disconnected { color: #f85149; background: rgba(248,81,73,0.1); border-color: rgba(248,81,73,0.2); }
+.connection-dot.is-disconnected { background: #f85149; box-shadow: none; animation: none; }
+
+
+/* ==========================================
+   WORKSPACE LAYOUT & CARD WRAPPERS
+   ========================================== */
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) 280px;
+  gap: 20px;
+  align-items: stretch;
+  height: calc(100vh - 130px);
+  min-height: 480px;
+}
+.model-card { grid-column: 1; height: 100%; }
+.remote { grid-column: 2; height: 100%; }
+
+.model-card {
+  border: var(--glass-border);
+  border-radius: 20px;
+  background: var(--panel);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+}
+
+.model-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 100%;
+  background: var(--liquid-glare);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.model-stage {
+  height: 100%;
+  padding: clamp(8px, 1.5vw, 16px);
+  display: grid;
+  place-items: center;
+  background: transparent;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+#three-canvas {
+  width: 100%; height: 100%; display: block;
+  border-radius: 12px; background: transparent; cursor: pointer; outline: none;
+}
+
+
+/* ==========================================
+   HISTORY LOGS LIST (Inside modals/views)
+   ========================================== */
+.events-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px; padding-bottom: 10px;
+  border-bottom: var(--glass-border);
+}
+.events-header svg { color: var(--teal); flex-shrink: 0; }
+.events-header h2 { font-size: 0.85rem; font-weight: 600; }
+.events-list {
+  display: grid; gap: 6px;
+  max-height: 160px; overflow-y: auto;
+}
+.events-list::-webkit-scrollbar { width: 3px; }
+.events-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+
+.history-item {
+  display: grid; grid-template-columns: auto minmax(0,1fr);
+  gap: 8px; align-items: center;
+  padding: 6px 10px; border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid transparent;
+  transition: background .2s;
+}
+.history-item:hover { background: var(--btn-bg-hover); }
+.event-time { color: var(--teal); font-size: .68rem; font-weight: 800; white-space: nowrap; }
+.event-message {
+  overflow-wrap: anywhere; display: flex; align-items: center;
+  gap: 6px; color: var(--muted); font-size: .72rem; margin: 0;
+}
+
+
+/* ==========================================
+   TOAST FLOATING ALERTS (Centered top)
+   ========================================== */
+.toast {
+  position: fixed; left: 50%; top: 20px;
+  transform: translateX(-50%) translateY(-20px) scale(0.95);
+  max-width: min(380px, calc(100% - 32px));
+  padding: 12px 20px; border: var(--glass-border); border-radius: 12px;
+  background: rgba(12, 12, 12, 0.85); backdrop-filter: blur(16px);
+  color: #ffffff; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  font-weight: 700; font-size: 0.82rem;
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0; pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.175,0.885,0.32,1.275);
+  z-index: 2000;
+}
+.toast::before {
+  content: ""; display: block; width: 7px; height: 7px; border-radius: 50%;
+  background: var(--teal); box-shadow: 0 0 10px var(--teal);
+  flex-shrink: 0;
+}
+.toast.is-visible { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+
+/* Day mode toast override */
+body.is-day .toast {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1d1d1f;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+
+/* ==========================================
+   3D OVERLAY WIDGETS (FAN / PIR WIDGETS)
+   ========================================== */
+.fan { position: absolute; top: 25px; left: 25px; width: 48px; height: 48px;
+  margin-left: -24px; margin-top: -24px; border-radius: 50%; z-index: 11;
+  pointer-events: auto; cursor: pointer; transition: transform 0.2s ease; }
+.fan:hover { transform: scale(1.1); }
+.fan-blade { position: absolute; top: 50%; left: 10%; width: 80%; height: 8px;
+  background: rgba(60,40,30,0.85); margin-top: -4px; border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25); }
+.fan-blade:nth-child(2) { transform: rotate(90deg); }
+.fan.is-on { animation: spin 0.6s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.pir-sensor { position: absolute; top: 24px; right: 24px; width: 36px; height: 36px;
+  border-radius: 50%; background: #fdfdfd; border: 4px solid #e0e0e0;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15); z-index: 20; display: grid; place-items: center; }
+.pir-sensor .sensor-eye { width: 14px; height: 14px; border-radius: 50%;
+  background: #aab2b5; transition: background 0.3s, box-shadow 0.3s; }
+.pir-sensor.is-on .sensor-eye { background: #4caf50; box-shadow: 0 0 12px #4caf50; }
+
+
+/* ==========================================
+   PIR PRESENCE ALERT BANNER
+   ========================================== */
+.pir-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(239, 68, 68, 0.15); /* Cristal rojo esmerilado */
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+  color: #ef4444;
+  font-weight: 700;
+  font-size: 0.8rem;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+  animation: alertPulse 1.5s ease-in-out infinite;
+}
+@keyframes alertPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+.pir-alert.is-active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ==========================================
+   DAY MODE OVERRIDES FOR COMPONENTS
+   ========================================== */
+body.is-day .model-stage {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.8), rgba(240,242,238,0.9)),
+    repeating-linear-gradient(45deg, rgba(0,0,0,0.02) 0 1px, transparent 1px 18px);
+}
+body.is-day .history-item { background: rgba(0,0,0,0.02); }
+body.is-day .pir-alert {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.25);
+  color: #dc2626;
+  box-shadow: 0 4px 15px rgba(220, 38, 38, 0.08);
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN (TABLET & MOBILE)
+   ========================================== */
+@media (max-width: 960px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: auto;
+    gap: 16px;
+  }
+  .model-card {
+    grid-column: 1;
+    height: 50vh; /* 3D Canvas takes up 50% viewport height on tablets/mobile */
+    min-height: 350px;
+  }
+  .remote {
+    grid-column: 1;
+    height: auto;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .connection {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .shell {
+    padding: 12px 0 20px;
+  }
+  .model-card {
+    height: 40vh;
+    min-height: 280px;
+  }
+}
+

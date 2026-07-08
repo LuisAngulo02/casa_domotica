@@ -35,6 +35,20 @@ def serialize_event(event):
 
 
 def toggle_device_state(device, turn_on):
+    # Regla de seguridad: no se puede abrir la puerta si la cerradura está bloqueada (is_on == True)
+    if device.key == "puerta" and turn_on:
+        try:
+            lock = DeviceState.objects.get(key="cerradura")
+            if lock.is_on:
+                return {
+                    "device": device,
+                    "command": "",
+                    "status": EventLog.ERROR,
+                    "message": "No se puede abrir la puerta: la cerradura está cerrada/bloqueada.",
+                }
+        except DeviceState.DoesNotExist:
+            pass
+
     command = command_for(device.key, turn_on)
     result = send_command(command)
 
@@ -43,50 +57,77 @@ def toggle_device_state(device, turn_on):
             device.is_on = turn_on
             device.save(update_fields=["is_on", "updated_at"])
 
+        # Generar un mensaje amigable en lenguaje natural en español
+        if device.kind == DeviceState.DOOR:
+            action_name = "abierta" if turn_on else "cerrada"
+            subject = device.label
+        elif device.kind == DeviceState.LOCK:
+            action_name = "bloqueada (seguro echado)" if turn_on else "desbloqueada (libre)"
+            subject = device.label
+        elif device.kind == DeviceState.LIGHT:
+            action_name = "encendida" if turn_on else "apagada"
+            if not device.label.lower().startswith("luz"):
+                subject = f"Luz {device.label}"
+            else:
+                subject = device.label
+        else: # ventilador, sensor, etc.
+            action_name = "activado" if turn_on else "desactivado"
+            if device.key == "ventilador":
+                action_name = "encendido" if turn_on else "apagado"
+            subject = device.label
+                
+        friendly_msg = f"{subject} {action_name}."
+        if result["status"] == EventLog.ERROR:
+            friendly_msg = f"Error: {result['message']}"
+
         EventLog.objects.create(
             device_key=device.key,
             action="encender" if turn_on else "apagar",
             command=command,
             status=result["status"],
-            message=result["message"],
+            message=friendly_msg,
         )
 
+        # Regla del Sensor PIR: activa únicamente la luz del jardín (exterior) al detectar presencia
         if device.key == "sensor_pir" and result["status"] != EventLog.ERROR:
-            lights = DeviceState.objects.filter(kind=DeviceState.LIGHT)
-            for light in lights:
-                if light.is_on != turn_on:
-                    light_command = command_for(light.key, turn_on)
+            try:
+                ext_light = DeviceState.objects.get(key="luz_jardin")
+                if ext_light.is_on != turn_on:
+                    light_command = command_for(ext_light.key, turn_on)
                     light_result = send_command(light_command)
                     if light_result["status"] != EventLog.ERROR:
-                        light.is_on = turn_on
-                        light.save(update_fields=["is_on", "updated_at"])
+                        ext_light.is_on = turn_on
+                        ext_light.save(update_fields=["is_on", "updated_at"])
                         EventLog.objects.create(
-                            device_key=light.key,
+                            device_key=ext_light.key,
                             action="encender" if turn_on else "apagar",
                             command=light_command,
                             status=light_result["status"],
-                            message="Simulado por PIR" if result["status"] == EventLog.SIMULATED else "Activado por PIR",
+                            message="Activado por presencia (PIR)" if turn_on else "Apagado por fin de presencia (PIR)",
                         )
+            except DeviceState.DoesNotExist:
+                pass
 
     return {
         "device": device,
         "command": command,
         "status": result["status"],
-        "message": result["message"],
+        "message": friendly_msg,
     }
 
 def sync_physical_state():
     from .constants import SYNC_ORDER
+    from django.core.cache import cache
     result = send_command("SYNC")
     
     if result["status"] == "ok" and result["message"].startswith("SYNC:"):
         try:
-            # Expected format: "SYNC:1,0,1,0,1,0,0,1,0"
-            values = result["message"].split(":")[1].split(",")
+            # Expected format: "SYNC:1,0,1,0,1,0,0,1,0,0,0,24.5"
+            parts = result["message"].split(":")[1].split(",")
             changed_devices = []
             
             with transaction.atomic():
-                for idx, val in enumerate(values):
+                for idx, val in enumerate(parts):
                     if idx < len(SYNC_ORDER):
                         device_key = SYNC_ORDER[idx]
                         is_on = (val.strip() == "1")
@@ -96,6 +137,18 @@ def sync_physical_state():
                             device.is_on = is_on
                             device.save(update_fields=["is_on", "updated_at"])
                             changed_devices.append(device)
+            
+            # Sincronizar LDR (posición 10) y Temperatura (posición 11) si están presentes
+            if len(parts) >= 12:
+                try:
+                    is_night_val = (parts[10].strip() == "1")
+                    temp_val = float(parts[11].strip())
+                    
+                    # Almacenar en cache con expiración corta de 60 segundos
+                    cache.set("arduino_temperature", temp_val, 60)
+                    cache.set("arduino_is_night", is_night_val, 60)
+                except (ValueError, IndexError):
+                    pass
             
             return {"status": "ok", "message": "Sincronizado", "changed": len(changed_devices) > 0}
         except Exception as e:

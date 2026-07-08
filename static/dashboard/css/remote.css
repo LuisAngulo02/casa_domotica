@@ -1,0 +1,538 @@
+/* ==========================================
+   REMOTE CONTROL MAIN BODY & CONTAINER
+   ========================================== */
+.remote {
+  --chassis-1: #23262f;
+  --chassis-2: #16171d;
+  --chassis-3: #0c0d11;
+  --screw-fill: rgba(0,0,0,0.65);
+  --screw-rim: rgba(255,255,255,0.10);
+
+  background:
+    radial-gradient(circle at 22px 22px, var(--screw-fill) 0%, var(--screw-fill) 2.2px, var(--screw-rim) 2.2px, var(--screw-rim) 3px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 22px) 22px, var(--screw-fill) 0%, var(--screw-fill) 2.2px, var(--screw-rim) 2.2px, var(--screw-rim) 3px, transparent 3.6px),
+    repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px),
+    linear-gradient(180deg, var(--chassis-1) 0%, var(--chassis-2) 32%, var(--chassis-3) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 48px 48px 26px 26px;
+  padding: 0;
+  /* Sin altura forzada y sin scroll: el panel crece según su contenido */
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.5),
+    0 0 0 3px rgba(255,255,255,0.03),
+    0 30px 55px -12px rgba(0, 0, 0, 0.92),
+    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 -8px 24px rgba(0,0,0,0.8),
+    inset 5px 0 14px rgba(255,255,255,0.025),
+    inset -5px 0 14px rgba(255,255,255,0.025);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.remote::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 100%;
+  background: var(--liquid-glare);
+  border-radius: inherit; /* Clippea la capa de reflejo en las esquinas redondeadas */
+  pointer-events: none;
+  z-index: 0;
+}
+
+.remote > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* IR Window at top */
+.remote-ir {
+  display: flex; justify-content: center; padding: 16px 0 4px;
+}
+.remote-ir-window {
+  width: 45px; height: 10px; border-radius: 5px;
+  background: linear-gradient(160deg, #4a0008 0%, #2b0003 55%, #1c0002 100%);
+  border: 1px solid #1c0002;
+  box-shadow:
+    inset 0 1px 3px rgba(0,0,0,0.9),
+    inset 0 -1px 2px rgba(255,70,70,0.12),
+    0 1px 1px rgba(255,255,255,0.08);
+  position: relative;
+  overflow: hidden;
+}
+.remote-ir-window::after {
+  content: "";
+  position: absolute;
+  top: 1.5px; left: 5px; right: 5px; height: 2px;
+  background: rgba(255,255,255,0.14);
+  border-radius: 2px;
+}
+
+/* Panel hundido para LED + botones de ayuda/voz */
+.remote-top-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px;
+  margin: 0 20px 6px;
+  padding: 6px 12px;
+  border-radius: 18px;
+  background: rgba(0,0,0,0.22);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.55), inset 0 -1px 0 rgba(255,255,255,0.03);
+}
+.remote-status-led {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #3fb950;
+  box-shadow: 0 0 6px #3fb950, 0 0 12px rgba(63,185,80,0.3);
+  animation: ledPulse 3s ease-in-out infinite;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+.remote-status-led.is-listening {
+  background: #2f81f7;
+  box-shadow: 0 0 8px #2f81f7, 0 0 16px rgba(47,129,247,0.6);
+  animation: ledListeningPulse 0.8s ease-in-out infinite;
+}
+@keyframes ledPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes ledListeningPulse {
+  0%, 100% { opacity: 1; transform: scale(1.2); }
+  50% { opacity: 0.4; transform: scale(0.9); }
+}
+
+.remote-power-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #3a3f4e 0%, #262a35 45%, #191c24 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #f85149; cursor: pointer;
+  display: grid; place-items: center;
+  position: relative; overflow: hidden;
+  transition: transform .16s cubic-bezier(.4,0,.2,1), box-shadow .16s ease;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.5), 0 6px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.remote-power-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.5), 0 10px 16px rgba(248,81,73,0.2), inset 0 1px 0 rgba(255,255,255,0.08); }
+.remote-power-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.35); }
+
+.remote-voice-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 28%, #3a3f4e 0%, #262a35 45%, #191c24 100%);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #7d8590; cursor: pointer;
+  display: grid; place-items: center;
+  position: relative; overflow: hidden;
+  transition: transform .16s cubic-bezier(.4,0,.2,1), box-shadow .16s ease, color .16s ease;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.5), 0 6px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.remote-voice-btn::before,
+.remote-power-btn::before {
+  content: "";
+  position: absolute;
+  top: 12%; left: 20%;
+  width: 40%; height: 26%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.20), rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+.remote-voice-btn:hover {
+  transform: translateY(-2px);
+  color: var(--teal);
+  box-shadow: 0 5px 0 rgba(0,0,0,0.5), 0 10px 16px rgba(47,129,247,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+.remote-voice-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.35); }
+
+.remote-voice-btn.is-listening {
+  color: #ffffff;
+  background: radial-gradient(circle at 34% 28%, #4a95fb, #2f81f7 45%, #1f51af 100%);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 0 18px rgba(47,129,247,0.7), 0 3px 0 rgba(0,0,0,0.4);
+  animation: voicePulse 1.2s ease-in-out infinite;
+}
+@keyframes voicePulse {
+  0%, 100% { transform: scale(1.05); box-shadow: 0 0 18px rgba(47,129,247,0.7), 0 3px 0 rgba(0,0,0,0.4); }
+  50% { transform: scale(1.12); box-shadow: 0 0 28px rgba(47,129,247,0.9), 0 3px 0 rgba(0,0,0,0.4); }
+}
+
+/* === LISTA DE SECCIONES === */
+.remote-grid {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 8px;
+  position: relative;
+}
+.remote-grid::before {
+  content: "";
+  position: absolute;
+  top: 2px; left: 50%;
+  transform: translateX(-50%);
+  width: 68px; height: 8px;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.14) 1px, transparent 1.4px);
+  background-size: 6px 6px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.remote-section-label {
+  font-size: 0.55rem; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  padding: 8px 0 0;
+}
+.remote-section-label:first-child { padding-top: 6px; }
+.remote-section-label::after {
+  content: "";
+  display: block;
+  width: 24px; height: 2px;
+  margin: 5px auto 0;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.14);
+}
+
+/* Contenedor base de cada sección (Luces / Accesos / Otros) */
+.remote-section-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 6px;
+  margin-bottom: 4px;
+}
+
+.remote-btn {
+  flex: 0 0 auto;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 2px;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted);
+  transition: color .2s ease;
+}
+
+.remote-btn-icon {
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 26%, #454956 0%, #2c2f3a 48%, #1a1c22 100%);
+  border: 1px solid rgba(0,0,0,0.6);
+  display: grid; place-items: center;
+  position: relative; overflow: hidden;
+  transition: transform .18s cubic-bezier(0.4,0,0.2,1), box-shadow .18s cubic-bezier(0.4,0,0.2,1), background .18s ease, border-color .18s ease;
+  box-shadow:
+    0 3px 0 rgba(0,0,0,0.55),
+    0 7px 12px rgba(0,0,0,0.45),
+    inset 0 2px 3px rgba(255,255,255,0.14),
+    inset 0 -3px 4px rgba(0,0,0,0.45);
+}
+.remote-btn-icon::before {
+  content: "";
+  position: absolute;
+  top: 10%; left: 18%;
+  width: 44%; height: 28%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.30), rgba(255,255,255,0) 72%);
+  pointer-events: none;
+}
+.remote-btn-icon svg {
+  stroke: currentColor; fill: none;
+  transition: all .25s ease;
+  position: relative; z-index: 1;
+}
+
+.remote-btn:hover .remote-btn-icon {
+  transform: translateY(-2px);
+  box-shadow:
+    0 5px 0 rgba(0,0,0,0.55),
+    0 11px 16px rgba(0,0,0,0.42),
+    inset 0 2px 3px rgba(255,255,255,0.18),
+    inset 0 -3px 4px rgba(0,0,0,0.5);
+}
+.remote-btn:active .remote-btn-icon {
+  transform: translateY(2px);
+  box-shadow:
+    0 1px 0 rgba(0,0,0,0.55),
+    0 2px 5px rgba(0,0,0,0.4),
+    inset 0 2px 3px rgba(0,0,0,0.5);
+}
+
+.remote-btn-label {
+  font-size: 0.55rem; font-weight: 600;
+  letter-spacing: 0.3px;
+  text-align: center;
+  line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: rgba(255,255,255,0.7);
+  transition: color .25s ease;
+}
+
+/* ===== Sección LUCES: grid compacto tipo teclado ===== */
+.remote-section-group[data-section="lights"] .remote-btn { width: 64px; }
+.remote-section-group[data-section="lights"] .remote-btn-icon { width: 42px; height: 42px; }
+.remote-section-group[data-section="lights"] .remote-btn-icon svg { width: 16px; height: 16px; }
+.remote-section-group[data-section="lights"] .remote-btn-label { max-width: 62px; }
+
+/* ===== Sección ACCESOS: clúster tipo rocker-switch ===== */
+.remote-section-group[data-section="access"] {
+  flex-wrap: nowrap;
+  background: rgba(0,0,0,0.25);
+  border-radius: 22px;
+  padding: 8px 4px;
+  position: relative;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+  gap: 0;
+}
+.remote-section-group[data-section="access"]::after {
+  content: "";
+  position: absolute;
+  top: 10px; bottom: 10px; left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.08);
+}
+.remote-section-group[data-section="access"] .remote-btn { width: 82px; padding: 6px 4px; }
+.remote-section-group[data-section="access"] .remote-btn-icon { width: 48px; height: 48px; }
+.remote-section-group[data-section="access"] .remote-btn-icon svg { width: 19px; height: 19px; }
+.remote-section-group[data-section="access"] .remote-btn-label { max-width: 78px; }
+
+/* ===== Sección OTROS: fila centrada, tamaño medio ===== */
+.remote-section-group[data-section="other"] .remote-btn { width: 74px; }
+.remote-section-group[data-section="other"] .remote-btn-icon { width: 46px; height: 46px; }
+.remote-section-group[data-section="other"] .remote-btn-icon svg { width: 18px; height: 18px; }
+.remote-section-group[data-section="other"] .remote-btn-label { max-width: 70px; }
+
+/* === ACTIVE / ON states === */
+.remote-btn.is-on .remote-btn-icon { border-color: rgba(47,129,247,0.4); }
+.remote-btn.is-on .remote-btn-label { color: #ffffff; }
+
+.remote-btn[data-kind="light"].is-on .remote-btn-icon {
+  background: radial-gradient(circle at 32% 26%, rgba(251,191,36,0.35), rgba(251,191,36,0.08) 65%, #1a1c22 100%);
+  border-color: rgba(251,191,36,0.45);
+  color: #fbbf24;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.45), 0 0 22px rgba(251,191,36,0.28), 0 7px 12px rgba(0,0,0,0.35), inset 0 2px 3px rgba(255,255,255,0.14);
+}
+.remote-btn[data-kind="door"].is-on .remote-btn-icon {
+  background: radial-gradient(circle at 32% 26%, rgba(167,139,250,0.35), rgba(167,139,250,0.08) 65%, #1a1c22 100%);
+  border-color: rgba(167,139,250,0.45);
+  color: #a78bfa;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.45), 0 0 22px rgba(167,139,250,0.28), 0 7px 12px rgba(0,0,0,0.35), inset 0 2px 3px rgba(255,255,255,0.14);
+}
+.remote-btn[data-kind="lock"].is-on .remote-btn-icon {
+  background: radial-gradient(circle at 32% 26%, rgba(248,113,113,0.35), rgba(248,113,113,0.08) 65%, #1a1c22 100%);
+  border-color: rgba(248,113,113,0.45);
+  color: #f87171;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.45), 0 0 22px rgba(248,113,113,0.28), 0 7px 12px rgba(0,0,0,0.35), inset 0 2px 3px rgba(255,255,255,0.14);
+}
+.remote-btn[data-kind="sensor"].is-on .remote-btn-icon {
+  background: radial-gradient(circle at 32% 26%, rgba(52,211,153,0.35), rgba(52,211,153,0.08) 65%, #1a1c22 100%);
+  border-color: rgba(52,211,153,0.45);
+  color: #34d399;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.45), 0 0 22px rgba(52,211,153,0.28), 0 7px 12px rgba(0,0,0,0.35), inset 0 2px 3px rgba(255,255,255,0.14);
+}
+.remote-btn[data-kind="fan"].is-on .remote-btn-icon {
+  background: radial-gradient(circle at 32% 26%, rgba(96,165,250,0.35), rgba(96,165,250,0.08) 65%, #1a1c22 100%);
+  border-color: rgba(96,165,250,0.45);
+  color: #60a5fa;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.45), 0 0 22px rgba(96,165,250,0.28), 0 7px 12px rgba(0,0,0,0.35), inset 0 2px 3px rgba(255,255,255,0.14);
+}
+.remote-btn[data-kind="fan"].is-on .remote-btn-icon svg { animation: fanSpin 1.5s linear infinite; }
+@keyframes fanSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* === BRAND FOOTER === */
+.remote-brand {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 6px 16px 12px;
+}
+.remote-brand svg { width: 12px; height: 12px; stroke: rgba(255,255,255,0.15); fill: none; }
+.remote-brand span { font-size: 0.55rem; font-weight: 700; letter-spacing: 4px; color: rgba(255,255,255,0.12); }
+
+/* ==========================================
+   DAY MODE OVERRIDES
+   ========================================== */
+body.is-day .remote {
+  --screw-fill: rgba(0,0,0,0.16);
+  --screw-rim: rgba(255,255,255,0.55);
+  background:
+    radial-gradient(circle at 22px 22px, var(--screw-fill) 0%, var(--screw-fill) 2.2px, var(--screw-rim) 2.2px, var(--screw-rim) 3px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 22px) 22px, var(--screw-fill) 0%, var(--screw-fill) 2.2px, var(--screw-rim) 2.2px, var(--screw-rim) 3px, transparent 3.6px),
+    repeating-linear-gradient(115deg, rgba(0,0,0,0.018) 0px, rgba(0,0,0,0.018) 1px, transparent 1px, transparent 3px),
+    linear-gradient(180deg, #eaecef 0%, #dbdee3 50%, #caccce 100%);
+  border: 1px solid rgba(0,0,0,0.15);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.6),
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px #ffffff,
+    inset 0 -6px 15px rgba(0,0,0,0.05);
+}
+body.is-day .remote-top-row {
+  background: rgba(0,0,0,0.045);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.08), inset 0 -1px 0 rgba(255,255,255,0.5);
+}
+body.is-day .remote-section-group[data-section="access"] {
+  background: rgba(0,0,0,0.05);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.08);
+}
+body.is-day .remote-section-group[data-section="access"]::after { background: rgba(0,0,0,0.1); }
+body.is-day .remote-grid::before { background-image: radial-gradient(circle, rgba(0,0,0,0.16) 1px, transparent 1.4px); }
+body.is-day .remote-section-label::after { background: rgba(0,0,0,0.15); }
+body.is-day .remote-section-label,
+body.is-day .remote-section-title { color: rgba(0,0,0,0.55); }
+body.is-day .remote-ir-window { background: linear-gradient(160deg, #4a0008 0%, #2b0003 55%, #1c0002 100%); border-color: #1c0002; }
+
+body.is-day .remote-btn-icon {
+  background: radial-gradient(circle at 32% 26%, #ffffff 0%, #eef0f4 55%, #e1e3eb 100%);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow:
+    0 3px 0 rgba(0,0,0,0.1),
+    0 7px 12px rgba(0,0,0,0.08),
+    inset 0 1px 2px #ffffff,
+    inset 0 -2px 3px rgba(0,0,0,0.08);
+}
+body.is-day .remote-btn:hover .remote-btn-icon {
+  box-shadow:
+    0 5px 0 rgba(0,0,0,0.1),
+    0 11px 16px rgba(0,0,0,0.1),
+    inset 0 1px 2px #ffffff,
+    inset 0 -2px 3px rgba(0,0,0,0.08);
+}
+body.is-day .remote-btn:active .remote-btn-icon {
+  box-shadow: 0 1px 0 rgba(0,0,0,0.1), 0 2px 5px rgba(0,0,0,0.08), inset 0 2px 3px rgba(0,0,0,0.1);
+}
+body.is-day .remote-btn-label { color: rgba(0,0,0,0.7); }
+body.is-day .remote-brand svg { stroke: rgba(0,0,0,0.15); }
+body.is-day .remote-brand span { color: rgba(0,0,0,0.15); }
+
+body.is-day .remote-voice-btn,
+body.is-day .remote-power-btn {
+  background: radial-gradient(circle at 34% 28%, #ffffff, #e8ecf2 45%, #d8dde6 100%);
+  border-color: rgba(0,0,0,0.08);
+  color: #57606a;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.1), 0 7px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+body.is-day .remote-voice-btn:hover {
+  color: var(--teal);
+  box-shadow: 0 5px 0 rgba(0,0,0,0.1), 0 11px 16px rgba(29,78,216,0.18), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+body.is-day .remote-voice-btn:active,
+body.is-day .remote-power-btn:active {
+  box-shadow: 0 1px 0 rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.1);
+}
+body.is-day .remote-voice-btn.is-listening {
+  color: #ffffff;
+  background: radial-gradient(circle at 34% 28%, #4a95fb, #2f81f7 45%, #1f51af 100%);
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 0 18px rgba(47,129,247,0.5), 0 3px 0 rgba(0,0,0,0.15);
+}
+
+/* Group buttons (encender/apagar todas las luces, si los usas en otro lado) */
+.remote-btn-icon.group-on-icon { background: rgba(251,191,36,0.08); color: #fbbf24; border-color: rgba(251,191,36,0.2); }
+.remote-btn:hover .remote-btn-icon.group-on-icon {
+  background: rgba(251,191,36,0.18); border-color: rgba(251,191,36,0.4);
+  box-shadow: 0 5px 0 rgba(0,0,0,0.45), 0 0 16px rgba(251,191,36,0.25), 0 11px 14px rgba(0,0,0,0.35);
+}
+.remote-btn-icon.group-off-icon { background: rgba(248,113,113,0.08); color: #f87171; border-color: rgba(248,113,113,0.2); }
+.remote-btn:hover .remote-btn-icon.group-off-icon {
+  background: rgba(248,113,113,0.18); border-color: rgba(248,113,113,0.4);
+  box-shadow: 0 5px 0 rgba(0,0,0,0.45), 0 0 16px rgba(248,113,113,0.25), 0 11px 14px rgba(0,0,0,0.35);
+}
+body.is-day .remote-btn-icon.group-on-icon { background: rgba(245,158,11,0.08); color: #d97706; border-color: rgba(245,158,11,0.2); }
+body.is-day .remote-btn:hover .remote-btn-icon.group-on-icon { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); }
+body.is-day .remote-btn-icon.group-off-icon { background: rgba(220,38,38,0.08); color: #dc2626; border-color: rgba(220,38,38,0.2); }
+body.is-day .remote-btn:hover .remote-btn-icon.group-off-icon { background: rgba(220,38,38,0.15); border-color: rgba(220,38,38,0.4); }
+
+/* ==========================================
+   RESPONSIVE
+   ========================================== */
+@media (max-width: 1280px) {
+  .remote-grid { padding: 12px 12px 6px; }
+  .remote-section-group[data-section="lights"] .remote-btn { width: 58px; }
+  .remote-section-group[data-section="lights"] .remote-btn-icon { width: 38px; height: 38px; }
+  .remote-section-group[data-section="access"] .remote-btn { width: 74px; }
+  .remote-section-group[data-section="access"] .remote-btn-icon { width: 44px; height: 44px; }
+  .remote-section-group[data-section="other"] .remote-btn { width: 68px; }
+  .remote-section-group[data-section="other"] .remote-btn-icon { width: 42px; height: 42px; }
+}
+
+@media (max-width: 960px) {
+  .remote { border-radius: 30px 30px 20px 20px; }
+  .remote-ir { padding: 12px 0 4px; }
+  .remote-ir-window { width: 30px; height: 6px; }
+  .remote-top-row { margin: 0 16px 6px; padding: 6px 12px; }
+  .remote-grid { padding: 14px 12px 8px; }
+
+  .remote-section-group[data-section="lights"] .remote-btn { width: 66px; }
+  .remote-section-group[data-section="lights"] .remote-btn-icon { width: 46px; height: 46px; }
+  .remote-section-group[data-section="access"] .remote-btn { width: 84px; }
+  .remote-section-group[data-section="access"] .remote-btn-icon { width: 50px; height: 50px; }
+  .remote-section-group[data-section="other"] .remote-btn { width: 76px; }
+  .remote-section-group[data-section="other"] .remote-btn-icon { width: 48px; height: 48px; }
+
+  .remote-brand { padding: 6px 16px 12px; }
+}
+
+/* ==========================================
+   REALTIME SENSORS DISPLAY BAR (Remote Display Screen)
+   ========================================== */
+.remote-sensors-bar {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 20px 10px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+}
+
+.remote-sensor-mini {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.25s ease;
+}
+
+.remote-sensor-mini .sensor-icon {
+  font-size: 0.7rem;
+}
+
+.remote-sensor-mini.is-active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+}
+
+.remote-sensor-mini.is-success {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #10b981;
+}
+
+/* Day mode styling overrides for sensors display */
+body.is-day .remote-sensors-bar {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1.5px 3px rgba(0,0,0,0.12);
+}
+
+body.is-day .remote-sensor-mini {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: var(--muted);
+}
+
+body.is-day .remote-sensor-mini.is-active {
+  background: var(--badge-off-bg);
+  border-color: var(--badge-off-border);
+  color: var(--badge-off-fg);
+  box-shadow: none;
+}
+
+body.is-day .remote-sensor-mini.is-success {
+  background: var(--badge-on-bg);
+  border-color: var(--badge-on-border);
+  color: var(--badge-on-fg);
+  box-shadow: none;
+}

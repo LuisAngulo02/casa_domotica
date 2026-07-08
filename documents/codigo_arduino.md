@@ -13,26 +13,31 @@ Este código está diseñado para cargarse en tu placa Arduino (Uno, Mega, Nano,
 #include <Servo.h>
 
 // Definición de pines para las luces (LEDs)
-const int PIN_L1 = 2;       // Habitación 1
-const int PIN_L2 = 3;       // Habitación 2
-const int PIN_L3 = 4;       // Sala
-const int PIN_L4 = 5;       // Cocina
-const int PIN_BANO = 6;     // Baño
-const int PIN_EXT = 7;      // Jardín
+const int PIN_L1 = 3;       // Habitación 1 (LED)
+const int PIN_L2 = 4;       // Habitación 2 (LED)
+const int PIN_L3 = 5;       // Sala (LED)
+const int PIN_L4 = 6;       // Cocina (LED)
+const int PIN_BANO = 8;     // Baño (LED)
+const int PIN_EXT = 10;     // Jardín / Exterior (LED)
 
-// Definición de pines para otros componentes
-const int PIN_LOCK = 8;     // Cerradura (Relé o LED)
+// Definición de sensores (Entradas)
+const int PIN_PIR = 2;      // Sensor de movimiento PIR (Entrada Digital)
+const int PIN_LDR = 7;      // Fotoresistor (Entrada Digital o módulo D0)
+const int PIN_TEMP = A0;    // Sensor de temperatura TMP36 (Entrada Analógica)
+
+// Definición de actuadores adicionales (Salidas)
+const int PIN_LOCK = 11;    // Cerradura electrónica (Relé o LED)
 const int PIN_DOOR = 9;     // Puerta Principal (Servomotor)
-const int PIN_PIR_IND = 10; // Indicador de simulación PIR (LED)
-const int PIN_FAN = 11;     // Ventilador de Sala (Relé o Transistor)
+const int PIN_FAN = 13;     // Ventilador de Sala (Motor DC o Relé)
 
 Servo doorServo;
+bool doorOpen = false;      // Estado de control del servomotor
 
 void setup() {
   // Iniciar comunicación serial a los mismos baudios que Django
   Serial.begin(9600);
   
-  // Configurar pines como salida
+  // Configurar pines de salida (Actuadores)
   pinMode(PIN_L1, OUTPUT);
   pinMode(PIN_L2, OUTPUT);
   pinMode(PIN_L3, OUTPUT);
@@ -40,12 +45,16 @@ void setup() {
   pinMode(PIN_BANO, OUTPUT);
   pinMode(PIN_EXT, OUTPUT);
   pinMode(PIN_LOCK, OUTPUT);
-  pinMode(PIN_PIR_IND, OUTPUT);
   pinMode(PIN_FAN, OUTPUT);
+
+  // Configurar pines de entrada (Sensores)
+  pinMode(PIN_PIR, INPUT);
+  pinMode(PIN_LDR, INPUT);
   
   // Adjuntar y posicionar el servomotor de la puerta
   doorServo.attach(PIN_DOOR);
   doorServo.write(0); // Posición inicial (Cerrada)
+  doorOpen = false;
   
   // Apagar todos los componentes al inicio
   apagarTodo();
@@ -109,10 +118,12 @@ void loop() {
     }
     else if (comando == "DOOR_OPEN") {
       doorServo.write(90); // Abrir puerta (90 grados)
+      doorOpen = true;
       Serial.println("OK");
     } 
     else if (comando == "DOOR_CLOSE") {
       doorServo.write(0); // Cerrar puerta (0 grados)
+      doorOpen = false;
       Serial.println("OK");
     }
     else if (comando == "LOCK_ON") {
@@ -123,12 +134,8 @@ void loop() {
       digitalWrite(PIN_LOCK, LOW); // Desactivar cerradura
       Serial.println("OK");
     }
-    else if (comando == "PIR_ON") {
-      digitalWrite(PIN_PIR_IND, HIGH); // Encender indicador del PIR
-      Serial.println("OK");
-    } 
-    else if (comando == "PIR_OFF") {
-      digitalWrite(PIN_PIR_IND, LOW); // Apagar indicador del PIR
+    else if (comando == "PIR_ON" || comando == "PIR_OFF") {
+      // El PIR es un sensor físico de lectura, pero retornamos OK para compatibilidad
       Serial.println("OK");
     }
     else if (comando == "FAN_ON") {
@@ -138,6 +145,31 @@ void loop() {
     else if (comando == "FAN_OFF") {
       digitalWrite(PIN_FAN, LOW); // Apagar ventilador
       Serial.println("OK");
+    }
+    else if (comando == "SYNC") {
+      // Leer valores actuales de sensores físicos
+      int pirState = digitalRead(PIN_PIR);
+      int ldrVal = digitalRead(PIN_LDR); // HIGH (Noche/Oscuro), LOW (Día/Claro)
+      
+      // Medir temperatura con TMP36 (Analog A0)
+      int sensorVal = analogRead(PIN_TEMP);
+      float voltage = sensorVal * (5.0 / 1023.0);
+      float tempC = (voltage - 0.5) * 100.0;
+      
+      // Retornar cadena SYNC con los 10 dispositivos principales (que incluye el PIR) más los otros 2 sensores (LDR y Temperatura)
+      Serial.print("SYNC:");
+      Serial.print(digitalRead(PIN_L1)); Serial.print(",");
+      Serial.print(digitalRead(PIN_L2)); Serial.print(",");
+      Serial.print(digitalRead(PIN_L3)); Serial.print(",");
+      Serial.print(digitalRead(PIN_L4)); Serial.print(",");
+      Serial.print(digitalRead(PIN_BANO)); Serial.print(",");
+      Serial.print(digitalRead(PIN_EXT)); Serial.print(",");
+      Serial.print(doorOpen ? "1" : "0"); Serial.print(",");
+      Serial.print(digitalRead(PIN_LOCK)); Serial.print(",");
+      Serial.print(pirState); Serial.print(",");
+      Serial.print(digitalRead(PIN_FAN)); Serial.print(",");
+      Serial.print(ldrVal); Serial.print(",");
+      Serial.println(tempC, 1); // Envía ej. "23.4"
     }
     else {
       // Comando desconocido
@@ -154,7 +186,8 @@ void apagarTodo() {
   digitalWrite(PIN_BANO, LOW);
   digitalWrite(PIN_EXT, LOW);
   digitalWrite(PIN_LOCK, LOW);
-  digitalWrite(PIN_PIR_IND, LOW);
   digitalWrite(PIN_FAN, LOW);
+  doorServo.write(0);
+  doorOpen = false;
 }
 ```
