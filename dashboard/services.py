@@ -125,6 +125,7 @@ def sync_physical_state():
             # Expected format: "SYNC:1,0,1,0,1,0,0,1,0,0,0,24.5"
             parts = result["message"].split(":")[1].split(",")
             changed_devices = []
+            physical_changed = False
             
             with transaction.atomic():
                 for idx, val in enumerate(parts):
@@ -141,8 +142,19 @@ def sync_physical_state():
             # Sincronizar LDR (posición 10) y Temperatura (posición 11) si están presentes
             if len(parts) >= 12:
                 try:
-                    is_night_val = (parts[10].strip() == "1")
+                    # ldrVal == 1 significa que HAY luz (ver Arduino: HIGH = luz).
+                    # Por lo tanto es_de_noche (is_night) es lo contrario: ldrVal == 0.
+                    is_night_val = (parts[10].strip() == "0")
                     temp_val = float(parts[11].strip())
+
+                    previous_is_night = cache.get("arduino_is_night")
+                    previous_temp = cache.get("arduino_temperature")
+
+                    if previous_is_night is None or previous_is_night != is_night_val:
+                        physical_changed = True
+
+                    if previous_temp is None or round(float(previous_temp), 1) != round(temp_val, 1):
+                        physical_changed = True
                     
                     # Almacenar en cache con expiración corta de 60 segundos
                     cache.set("arduino_temperature", temp_val, 60)
@@ -150,7 +162,7 @@ def sync_physical_state():
                 except (ValueError, IndexError):
                     pass
             
-            return {"status": "ok", "message": "Sincronizado", "changed": len(changed_devices) > 0}
+            return {"status": "ok", "message": "Sincronizado", "changed": len(changed_devices) > 0 or physical_changed}
         except Exception as e:
             return {"status": "error", "message": f"Error parseando SYNC: {e}", "changed": False}
             

@@ -27,7 +27,7 @@ function escapeHtml(value) {
 // Fetch con timeout para no dejar peticiones colgadas si el backend/Arduino no responde
 async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(() => controller.abort(new DOMException("Request timed out", "TimeoutError")), timeoutMs);
   try {
     const response = await fetch(url, { ...options, signal: controller.signal });
     return response;
@@ -470,7 +470,7 @@ const systemConnection = document.getElementById("systemConnection");
 
 async function checkSystemStatus() {
   try {
-    const data = await fetchJson("/api/system/status/");
+    const data = await fetchJson("/api/system/status/", {}, 15000);
 
     if (!systemConnection) return;
 
@@ -499,6 +499,12 @@ async function checkSystemStatus() {
       wasConnected = false;
     }
   } catch (error) {
+    if (error && (error.name === "AbortError" || error.name === "TimeoutError")) {
+      console.warn("Verificación de conexión agotó el tiempo de espera");
+      wasConnected = false;
+      return;
+    }
+
     console.error("Error al verificar conexión:", error);
     // Si ni siquiera pudimos consultar el estado, asumimos desconexión para no
     // seguir sondeando el estado físico contra un backend que no responde.
@@ -507,7 +513,7 @@ async function checkSystemStatus() {
 }
 
 async function checkPhysicalState() {
-  if (!wasConnected) return; // don't poll if disconnected
+  if (wasConnected === false) return; // don't poll if we already know it is disconnected
 
   try {
     const data = await fetchJson("/api/sync-physical/");
@@ -515,6 +521,7 @@ async function checkPhysicalState() {
     if (data.status === "ok" && data.changed) {
       await loadDevices();
       await loadHistory();
+      await syncWeather();
     }
   } catch (error) {
     console.error("Error sincronizando estado físico:", error);
@@ -611,6 +618,7 @@ window.addEventListener('DOMContentLoaded', () => {
   loadHistory();
   syncWeather();
   checkSystemStatus();
+  checkPhysicalState();
 
   // Set up intervals
   startPolling();
