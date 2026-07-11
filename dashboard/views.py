@@ -50,11 +50,9 @@ def toggle_device(request, device_key):
     except json.JSONDecodeError:
         return JsonResponse({"error": "Solicitud invalida"}, status=400)
 
-    if "is_on" in payload and not isinstance(payload["is_on"], bool):
-        return JsonResponse({"error": "El campo is_on debe ser verdadero o falso"}, status=400)
-
+    speed = payload.get("speed")  # Puede ser 0, 1, 2, 3 o None
     turn_on = bool(payload.get("is_on", not device.is_on))
-    result = toggle_device_state(device, turn_on)
+    result = toggle_device_state(device, turn_on, speed=speed)
 
     status_code = 200 if result["status"] != EventLog.ERROR else 503
     return JsonResponse(
@@ -139,22 +137,32 @@ def sync_weather(request):
         # Day is 6:00 to 17:59, Night is 18:00 to 5:59
         is_night = hour >= 18 or hour < 6
         
-    # Update PIR Sensor based on day/night
-    try:
-        pir = DeviceState.objects.get(key="sensor_pir")
-        if pir.is_on != is_night:
-            toggle_device_state(pir, is_night)
-    except DeviceState.DoesNotExist:
-        pass
+
         
-    # Update Fan based on temperature (>= 26°C -> ON)
+    # Update Fan based on temperature (>= 31°C -> ON, <= 26°C -> OFF) only if in Auto mode
     try:
-        fan = DeviceState.objects.get(key="ventilador")
-        turn_fan_on = current_temp >= 26
-        if fan.is_on != turn_fan_on:
-            toggle_device_state(fan, turn_fan_on)
+        fan_mode = DeviceState.objects.get(key="modo_ventilador")
+        is_auto = fan_mode.is_on
     except DeviceState.DoesNotExist:
-        pass
+        is_auto = False
+
+    if is_auto:
+        try:
+            fan = DeviceState.objects.get(key="ventilador")
+            
+            turn_fan_on = fan.is_on
+            if not fan.is_on and current_temp >= 31.0:
+                turn_fan_on = True
+            elif fan.is_on and current_temp <= 26.0:
+                turn_fan_on = False
+                
+            nivel_deseado = 3 if turn_fan_on else 0
+            current_speed = getattr(fan, "speed", 0) if fan.is_on else 0
+            
+            if fan.is_on != turn_fan_on or current_speed != nivel_deseado:
+                toggle_device_state(fan, turn_fan_on, speed=nivel_deseado)
+        except DeviceState.DoesNotExist:
+            pass
 
     # Automatización de luces interiores basada en fotoresistencia (LDR / is_night) si está activo
     auto_theme_param = request.GET.get("auto_theme", "true").lower() == "true"

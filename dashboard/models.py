@@ -7,6 +7,7 @@ class DeviceState(models.Model):
     LOCK = "lock"
     SENSOR = "sensor"
     FAN = "fan"
+    FAN_MODE = "fan_mode"
 
     KIND_CHOICES = [
         (LIGHT, "Luz"),
@@ -14,12 +15,14 @@ class DeviceState(models.Model):
         (LOCK, "Cerradura"),
         (SENSOR, "Sensor"),
         (FAN, "Ventilador"),
+        (FAN_MODE, "Modo Ventilador"),
     ]
 
     key = models.SlugField(unique=True)
     label = models.CharField(max_length=80)
     kind = models.CharField(max_length=20, choices=KIND_CHOICES)
     is_on = models.BooleanField(default=False)
+    speed = models.IntegerField(default=0)  # 0=off, 1=baja, 2=media, 3=alta
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
