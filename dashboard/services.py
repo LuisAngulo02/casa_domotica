@@ -34,7 +34,7 @@ def serialize_event(event):
     }
 
 
-def toggle_device_state(device, turn_on):
+def toggle_device_state(device, turn_on, speed=None):
     # Regla de seguridad: no se puede abrir la puerta si la cerradura está bloqueada (is_on == True)
     if device.key == "puerta" and turn_on:
         try:
@@ -49,13 +49,41 @@ def toggle_device_state(device, turn_on):
         except DeviceState.DoesNotExist:
             pass
 
-    command = command_for(device.key, turn_on)
+    # Regla de seguridad: no se puede cambiar el estado de la cerradura si la puerta está abierta (is_on == True)
+    if device.key == "cerradura":
+        try:
+            door = DeviceState.objects.get(key="puerta")
+            if door.is_on:
+                return {
+                    "device": device,
+                    "command": "",
+                    "status": EventLog.ERROR,
+                    "message": "No se puede cambiar el estado de la cerradura si la puerta está abierta.",
+                }
+        except DeviceState.DoesNotExist:
+            pass
+
+    if device.key == "ventilador":
+        command = "FAN_ON" if turn_on else "FAN_OFF"
+        speed = 3 if turn_on else 0
+    else:
+        command = command_for(device.key, turn_on)
+        speed = None
+        
     result = send_command(command)
 
     with transaction.atomic():
         if result["status"] != EventLog.ERROR:
             device.is_on = turn_on
-            device.save(update_fields=["is_on", "updated_at"])
+            if device.key == "ventilador" and hasattr(device, "speed"):
+                device.speed = speed
+                try:
+                    device.save(update_fields=["is_on", "speed", "updated_at"])
+                except Exception:
+                    # Resiliencia si el usuario no ha corrido las migraciones todavía
+                    device.save(update_fields=["is_on", "updated_at"])
+            else:
+                device.save(update_fields=["is_on", "updated_at"])
 
         # Generar un mensaje amigable en lenguaje natural en español
         if device.kind == DeviceState.DOOR:
@@ -131,21 +159,56 @@ def sync_physical_state():
                 for idx, val in enumerate(parts):
                     if idx < len(SYNC_ORDER):
                         device_key = SYNC_ORDER[idx]
-                        is_on = (val.strip() == "1")
-                        
                         device = DeviceState.objects.get(key=device_key)
-                        if device.is_on != is_on:
-                            device.is_on = is_on
-                            device.save(update_fields=["is_on", "updated_at"])
-                            changed_devices.append(device)
+                        
+                        if device.key == "modo_ventilador":
+                            is_on = (val.strip() == "0") # 0 = Auto (is_on = True), 1 = Manual (is_on = False)
+                            if device.is_on != is_on:
+                                device.is_on = is_on
+                                device.save(update_fields=["is_on", "updated_at"])
+                                changed_devices.append(device)
+                        elif device.key == "ventilador":
+                            try:
+                                speed_val = int(val.strip())
+                            except ValueError:
+                                speed_val = 0
+                            is_on = (speed_val > 0)
+                            
+                            speed_changed = False
+                            if hasattr(device, "speed") and device.speed != speed_val:
+                                device.speed = speed_val
+                                speed_changed = True
+                            
+                            if device.is_on != is_on or speed_changed:
+                                device.is_on = is_on
+                                if hasattr(device, "speed"):
+                                    try:
+                                        device.save(update_fields=["is_on", "speed", "updated_at"])
+                                    except Exception:
+                                        device.save(update_fields=["is_on", "updated_at"])
+                                else:
+                                    device.save(update_fields=["is_on", "updated_at"])
+                                changed_devices.append(device)
+                        elif device.key == "cerradura":
+                            is_on = (val.strip() == "0") # 0 = locked (is_on = True), 1 = unlocked (is_on = False)
+                            if device.is_on != is_on:
+                                device.is_on = is_on
+                                device.save(update_fields=["is_on", "updated_at"])
+                                changed_devices.append(device)
+                        else:
+                            is_on = (val.strip() == "1")
+                            if device.is_on != is_on:
+                                device.is_on = is_on
+                                device.save(update_fields=["is_on", "updated_at"])
+                                changed_devices.append(device)
             
-            # Sincronizar LDR (posición 10) y Temperatura (posición 11) si están presentes
-            if len(parts) >= 12:
+            # Sincronizar LDR (posición 11) y Temperatura (posición 12) si están presentes
+            if len(parts) >= 13:
                 try:
                     # ldrVal == 1 significa que HAY luz (ver Arduino: HIGH = luz).
                     # Por lo tanto es_de_noche (is_night) es lo contrario: ldrVal == 0.
-                    is_night_val = (parts[10].strip() == "0")
-                    temp_val = float(parts[11].strip())
+                    is_night_val = (parts[11].strip() == "0")
+                    temp_val = float(parts[12].strip())
 
                     previous_is_night = cache.get("arduino_is_night")
                     previous_temp = cache.get("arduino_temperature")

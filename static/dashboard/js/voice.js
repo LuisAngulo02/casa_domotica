@@ -36,7 +36,8 @@ export const VoiceControl = {
     "puerta": ["puerta principal", "puerta de entrada", "puerta", "porton", "entrada"],
     "cerradura": ["cerradura", "seguro", "cerrojo", "candado", "llave"],
     "sensor_pir": ["sensor de movimiento", "sensor pir", "sensor"],
-    "ventilador": ["ventilador de la sala", "ventilador sala", "ventilador", "aire", "abanico"]
+    "ventilador": ["ventilador de la sala", "ventilador sala", "ventilador", "aire", "abanico"],
+    "modo_ventilador": ["ventilador automatico", "ventilador automatico", "modo automatico del ventilador", "modo automatico", "modo auto", "ventilador inteligente", "automatico del ventilador"]
   },
 
   onKeywords: ["encender", "prender", "conectar", "activar", "abrir", "enciende", "prende", "conecta", "activa", "abre", "on"],
@@ -51,13 +52,11 @@ export const VoiceControl = {
       .trim();
   },
 
-  // Envuelve la llamada al callback de toggle de un solo dispositivo asegurando que
-  // siempre se trabaje con una Promesa real, aunque el callback no devuelva una.
-  callToggleDevice(deviceKey, targetState) {
+  callToggleDevice(deviceKey, targetState, speed = null) {
     if (typeof this.toggleDeviceCallback !== "function") {
       return Promise.reject(new Error("toggleDeviceCallback no está configurado"));
     }
-    return Promise.resolve(this.toggleDeviceCallback(deviceKey, targetState));
+    return Promise.resolve(this.toggleDeviceCallback(deviceKey, targetState, speed));
   },
 
   callToggleAllLights(targetState) {

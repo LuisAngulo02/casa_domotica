@@ -12,6 +12,7 @@ DEFAULT_DEVICES = [
     ("cerradura", "Cerradura", DeviceState.LOCK),
     ("sensor_pir", "Sensor PIR", DeviceState.SENSOR),
     ("ventilador", "Ventilador Sala", DeviceState.FAN),
+    ("modo_ventilador", "Ventilador Automático", DeviceState.FAN_MODE),
 ]
 
 DEVICE_COMMANDS = {
@@ -22,9 +23,10 @@ DEVICE_COMMANDS = {
     "luz_bano": {"on": "BANO_ON", "off": "BANO_OFF"},
     "luz_jardin": {"on": "EXT_ON", "off": "EXT_OFF"},
     "puerta": {"on": "DOOR_OPEN", "off": "DOOR_CLOSE"},
-    "cerradura": {"on": "LOCK_ON", "off": "LOCK_OFF"},
+    "cerradura": {"on": "LOCK_OFF", "off": "LOCK_ON"},
     "sensor_pir": {"on": "PIR_ON", "off": "PIR_OFF"},
     "ventilador": {"on": "FAN_ON", "off": "FAN_OFF"},
+    "modo_ventilador": {"on": "FAN_MODE_AUTO", "off": "FAN_MODE_MANUAL"},
 }
 
 SYNC_ORDER = [
@@ -38,4 +40,5 @@ SYNC_ORDER = [
     "cerradura",
     "sensor_pir",
     "ventilador",
+    "modo_ventilador",
 ]

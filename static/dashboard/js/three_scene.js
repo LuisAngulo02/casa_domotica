@@ -319,19 +319,25 @@ export const ThreeScene = {
 
     if (this.controls) this.controls.update();
 
-    // Animate fan if on
+    // Animate fan if on (rotation speed depends on speedLevel)
     const fanGroup = this.meshes["fan_group"];
     if (fanGroup && fanGroup.userData.isOn) {
-      fanGroup.rotation.y += 10 * delta;
+      const speedLevel = fanGroup.userData.speedLevel || 2;
+      const speedMultiplier = speedLevel === 1 ? 4 : (speedLevel === 3 ? 22 : 11);
+      fanGroup.rotation.y += speedMultiplier * delta;
     } else if (!fanGroup) {
       // Fallback
       if (this.meshes["fan_motor_body"] && this.meshes["fan_motor_body"].userData.isOn) {
-        this.meshes["fan_motor_body"].rotation.y += 10 * delta;
+        const speedLevel = this.meshes["fan_motor_body"].userData.speedLevel || 2;
+        const speedMultiplier = speedLevel === 1 ? 4 : (speedLevel === 3 ? 22 : 11);
+        this.meshes["fan_motor_body"].rotation.y += speedMultiplier * delta;
       }
       for (let i = 0; i < 4; i++) {
         const blade = this.meshes[`fan_blade_${i}`];
         if (blade && blade.userData.isOn) {
-          blade.rotation.y += 10 * delta;
+          const speedLevel = blade.userData.speedLevel || 2;
+          const speedMultiplier = speedLevel === 1 ? 4 : (speedLevel === 3 ? 22 : 11);
+          blade.rotation.y += speedMultiplier * delta;
         }
       }
     }
@@ -437,7 +443,7 @@ export const ThreeScene = {
     });
   },
 
-  updateDeviceState(deviceKey, isOn) {
+  updateDeviceState(deviceKey, isOn, speed = null) {
     const meshName = this.mapping[deviceKey];
     if (!meshName) return;
 
@@ -457,11 +463,22 @@ export const ThreeScene = {
       }
     } else if (deviceKey === "ventilador") {
       const fan = this.meshes["fan_group"];
-      if (fan) fan.userData.isOn = isOn;
+      const speedLevel = (speed !== null) ? speed : (isOn ? 2 : 0);
+      
+      if (fan) {
+        fan.userData.isOn = isOn;
+        fan.userData.speedLevel = speedLevel;
+      }
 
-      if (this.meshes["fan_motor_body"]) this.meshes["fan_motor_body"].userData.isOn = isOn;
+      if (this.meshes["fan_motor_body"]) {
+        this.meshes["fan_motor_body"].userData.isOn = isOn;
+        this.meshes["fan_motor_body"].userData.speedLevel = speedLevel;
+      }
       for (let i = 0; i < 4; i++) {
-        if (this.meshes[`fan_blade_${i}`]) this.meshes[`fan_blade_${i}`].userData.isOn = isOn;
+        if (this.meshes[`fan_blade_${i}`]) {
+          this.meshes[`fan_blade_${i}`].userData.isOn = isOn;
+          this.meshes[`fan_blade_${i}`].userData.speedLevel = speedLevel;
+        }
       }
     } else {
       // Assume it's a light (led_room1, etc)

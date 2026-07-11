@@ -229,20 +229,91 @@ input:checked + .slider:before {
   border-radius: 50%;
 }
 
-/* Day mode overrides */
+/* Day mode overrides to match screenshot precisely */
+body.is-day .modal-container {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+body.is-day .modal-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
 body.is-day .sensor-card {
-  background: rgba(0, 0, 0, 0.015);
-  border-color: rgba(0, 0, 0, 0.04);
+  background: #f3f4f6;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
 }
+
 body.is-day .sensor-card:hover {
-  background: rgba(0, 0, 0, 0.035);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-body.is-day .slider {
-  background-color: rgba(0, 0, 0, 0.05);
+  background: #e5e7eb;
   border-color: rgba(0, 0, 0, 0.1);
 }
+
+body.is-day .sensor-icon-wrapper {
+  background: #dbeafe;
+  border: 1px solid #bfdbfe;
+}
+
+body.is-day .sensor-icon {
+  color: #2563eb !important;
+}
+
+body.is-day .sensor-card-body {
+  background: #a1a3a6;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body.is-day .sensor-label {
+  color: #4b5563;
+  font-weight: 700;
+}
+
+body.is-day .sensor-badge {
+  color: #374151;
+  background: #e5e7eb;
+  border: 1px solid #d1d5db;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  display: inline-block;
+}
+
+body.is-day .sensor-badge.is-success {
+  color: #047857;
+  background: #d1fae5;
+  border-color: #6ee7b7;
+}
+
+body.is-day .sensor-badge.is-active {
+  color: #b91c1c;
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+body.is-day .sensor-meta-value {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+body.is-day .slider {
+  background-color: #e5e7eb;
+  border-color: #d1d5db;
+}
+
 body.is-day .slider:before {
   background-color: #ffffff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
+
+body.is-day input:checked + .slider {
+  background-color: #ffffff;
+  border-color: #bfdbfe;
+}
+
+body.is-day input:checked + .slider:before {
+  background-color: #2563eb;
+}
+

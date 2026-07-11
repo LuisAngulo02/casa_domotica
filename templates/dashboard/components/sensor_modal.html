@@ -88,6 +88,36 @@
         </div>
       </div>
 
+      <!-- Ventilador Sala (Motor DC) -->
+      <div class="sensor-card">
+        <div class="sensor-card-header">
+          <div class="sensor-icon-wrapper" style="background: rgba(20, 184, 166, 0.1); border-color: rgba(20, 184, 166, 0.2);">
+            <svg class="sensor-icon" style="color: var(--teal);" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/></svg>
+          </div>
+          <div>
+            <h3 class="sensor-name">Ventilador (Motor DC)</h3>
+            <p class="sensor-desc">Configuración y estado del extractor</p>
+          </div>
+        </div>
+        <div class="sensor-card-body">
+          <div class="sensor-value-group">
+            <span class="sensor-label">Estado actual:</span>
+            <span id="modal-fan-status-value" class="sensor-badge">Inactivo</span>
+          </div>
+          
+          <div class="sensor-toggle-row">
+            <div class="sensor-toggle-label">
+              <span class="font-bold">Control Automático</span>
+              <span class="text-xs text-muted" style="display: block; font-size: 0.68rem; opacity: 0.8; margin-top: 1px;">Activa por temperatura (31°C)</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="modal-fan-auto-toggle" data-device="modo_ventilador">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>

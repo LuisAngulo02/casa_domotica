@@ -84,6 +84,7 @@ const kindIcons = {
   lock: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
   sensor: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h2"/><path d="M20 12h2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 19.07 1.41-1.41"/><path d="m17.66 6.34 1.41-1.41"/><circle cx="12" cy="12" r="4"/></svg>`,
   fan: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/></svg>`,
+  fan_mode: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>`,
 };
 
 const sectionConfig = [
@@ -116,7 +117,7 @@ function setHotspotState(device) {
 
   // Update Three.js model
   if (window.ThreeScene && window.ThreeScene.model && typeof window.ThreeScene.updateDeviceState === "function") {
-    window.ThreeScene.updateDeviceState(device.key, !!device.is_on);
+    window.ThreeScene.updateDeviceState(device.key, !!device.is_on, device.speed);
   }
 
   // Update PIR motion alert banner and remote screen indicators
@@ -139,12 +140,28 @@ function setHotspotState(device) {
     const pirStatus = document.getElementById("pir-status-value");
     const pirLastTime = document.getElementById("pir-last-time");
     if (pirStatus) {
-      pirStatus.textContent = device.is_on ? "⚠️ Presencia Detectada" : "Sin presencia";
+      pirStatus.textContent = device.is_on ? "Presencia Detectada" : "Sin presencia";
       pirStatus.className = "sensor-badge " + (device.is_on ? "is-active" : "");
     }
     if (device.is_on && pirLastTime) {
       const now = new Date();
       pirLastTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+  }
+
+  // Sincronizar el estado del ventilador y su modo automático en el modal de sensores
+  if (device.key === "modo_ventilador") {
+    const fanAutoToggle = document.getElementById("modal-fan-auto-toggle");
+    if (fanAutoToggle) {
+      fanAutoToggle.checked = !!device.is_on;
+    }
+  }
+
+  if (device.key === "ventilador") {
+    const fanStatus = document.getElementById("modal-fan-status-value");
+    if (fanStatus) {
+      fanStatus.textContent = device.is_on ? "Activo" : "Inactivo";
+      fanStatus.className = "sensor-badge " + (device.is_on ? "is-active" : "");
     }
   }
 }
@@ -242,6 +259,10 @@ async function loadDevices() {
   try {
     const data = await fetchJson("/api/devices/");
     renderDevices(data.devices);
+    // Asegurar que el estado del sensor_pir y otros dispositivos no visibles en el control remoto se actualice
+    data.devices.forEach((device) => {
+      setHotspotState(device);
+    });
   } catch (error) {
     console.error("Error cargando dispositivos:", error);
     showToast("Error al cargar dispositivos");
@@ -257,7 +278,7 @@ async function loadHistory() {
   }
 }
 
-async function toggleDevice(deviceKey, forcedState = null) {
+async function toggleDevice(deviceKey, forcedState = null, speed = null) {
   if (!deviceKey) return Promise.reject(new Error("deviceKey es requerido"));
 
   // Evita disparar el mismo toggle dos veces mientras la petición anterior sigue en curso
@@ -305,7 +326,7 @@ async function toggleDevice(deviceKey, forcedState = null) {
         "Content-Type": "application/json",
         "X-CSRFToken": getCookie("csrftoken"),
       },
-      body: JSON.stringify({ is_on: nextState }),
+      body: JSON.stringify({ is_on: nextState, speed: speed }),
     });
 
     setHotspotState(data.device);
@@ -442,13 +463,13 @@ async function syncWeather() {
     if (tempStatus && typeof data.temperature === "number" && !Number.isNaN(data.temperature)) {
       tempStatus.textContent = `${data.temperature.toFixed(1)} °C`;
 
-      let label = "Normal ☀️";
+      let label = "Normal";
       let badgeClass = "sensor-badge";
       if (data.temperature < 18) {
-        label = "Fresco / Frío ❄️";
+        label = "Fresco / Frío";
         badgeClass += " is-success";
       } else if (data.temperature >= 26) {
-        label = "Caluroso / Motor DC Activo 🔥";
+        label = "Caluroso / Motor DC Activo";
         badgeClass += " is-active";
       }
 
@@ -609,6 +630,19 @@ window.addEventListener('DOMContentLoaded', () => {
       localStorage.setItem("autoTheme", e.target.checked ? "true" : "false");
       if (e.target.checked) {
         syncWeather(); // Sincronización inmediata al activar
+      }
+    });
+  }
+
+  // Configurar el checkbox de Ventilador Automático (modo_ventilador) en el modal de sensores
+  const fanAutoToggle = document.getElementById("modal-fan-auto-toggle");
+  if (fanAutoToggle) {
+    fanAutoToggle.addEventListener("change", async () => {
+      try {
+        await toggleDevice("modo_ventilador");
+      } catch (err) {
+        console.error("Error al conmutar modo del ventilador:", err);
+        fanAutoToggle.checked = !fanAutoToggle.checked;
       }
     });
   }
